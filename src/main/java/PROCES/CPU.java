@@ -21,4 +21,8 @@ public class CPU {
     public PCB getCurrent(){
         return current;
     }
+
+    public void setCurrent(PCB current) {
+        this.current = current;
+    }
 }
