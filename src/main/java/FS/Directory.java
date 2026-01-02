@@ -1,29 +1,27 @@
 package FS;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Directory extends FSNode {
-    private List<FSNode> children;
+    private Map<String,FSNode> children;
 
     public Directory(String name, Directory parent) {
         super(name, parent);
-        this.children = new ArrayList<>();
+        this.children = new HashMap<>();
     }
 
     public void addChild(FSNode node) {
-        children.add(node);
+        children.put(node.getName(), node);
     }
 
     public FSNode getChild(String name) {
-        for (FSNode n : children) {
-            if (n.getName().equals(name))
-                return n;
-        }
-        return null;
+        return children.get(name);
     }
 
     public List<FSNode> list() {
-        return children;
+        return new ArrayList<>(children.values());
     }
 }
