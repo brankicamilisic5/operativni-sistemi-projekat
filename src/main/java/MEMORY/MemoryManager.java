@@ -7,42 +7,65 @@ import java.util.List;
 
 public class MemoryManager {
     private RAM ram;
-    List<MemorySegment> segments;
+    private List<MemorySegment> segments;
 
     public MemoryManager(RAM ram){
         this.ram=ram;
         this.segments=new ArrayList<>();
     }
 
-    //public boolean allocate(PCB p,int size){}
+    public boolean allocate(PCB p, int size) {
+        int currentBase = 0;
 
-    public void free(PCB p){}
+        segments.sort((s1, s2) -> Integer.compare(s1.getBase(), s2.getBase()));
 
-    public int read(PCB p, int address){
-            for (MemorySegment s : segments) {
-                if (s.getOwner() == p && s.contains(address)) {
-                    return ram.read(address-s.getBase());
-                }
+        for (MemorySegment s : segments) {
+            if (s.getBase() - currentBase >= size) {
+                segments.add(new MemorySegment(p, currentBase, size));
+                return true;
             }
-            throw new RuntimeException("Nevažeća adresa ili pristup memoriji");
+            currentBase = s.getBase() + s.getLimit();
+        }
+
+
+        if (ram.size() - currentBase >= size) {
+            segments.add(new MemorySegment(p, currentBase, size));
+            return true;
+        }
+        return false;
     }
 
-    public void write(PCB p, int address,int value){
+
+
+    public void free(PCB p) {
+        segments.removeIf(s -> s.getOwner().equals(p));
+    }
+
+    public int read(PCB p, int address) {
         for (MemorySegment s : segments) {
-            if (s.getOwner()==p && s.contains(address)) {
-                ram.write(address-s.getBase(),value);
+            if (s.getOwner().equals(p) && s.contains(s.getBase() + address)) {
+                return ram.read(s.getBase() + address);
+            }
+        }
+        throw new RuntimeException("Segmentation Fault: Neovlašten pristup ili nevažeća adresa!");
+    }
+
+    public void write(PCB p, int address, int value) {
+        for (MemorySegment s : segments) {
+            if (s.getOwner().equals(p) && s.contains(s.getBase() + address)) {
+                ram.write(s.getBase() + address, value);
                 return;
             }
         }
-        throw new RuntimeException("Nevažeća adresa ili pristup memoriji");
-
+        throw new RuntimeException("Segmentation Fault: Pokušaj pisanja na nevažeću adresu!");
     }
+
     public String dumpMemory() {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < ram.size(); i++) {
             sb.append(ram.read(i)).append(" ");
         }
-        return sb.toString();
+        return sb.toString().trim();
     }
 
 }

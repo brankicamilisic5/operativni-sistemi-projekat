@@ -1,11 +1,8 @@
 package OS;
-
-
 import FS.FileSystem;
 import MEMORY.MemoryManager;
 import PROCES.*;
-
-
+import java.util.ArrayList;
 import java.util.List;
 
 public class OSKernel {
@@ -19,29 +16,59 @@ public class OSKernel {
     //private IOManager ioManager;
     private int nextPid;
 
+    public OSKernel(MemoryManager memoryManager, FileSystem fileSystem) {
+        this.processTable = new ArrayList<>();
+        this.readyQueue = new ReadyQueue(new java.util.LinkedList<>());
+        this.blockedQueue = new BlockedQueue(new ArrayList<PCB>());
+        this.cpu = new CPU();
+        this.nextPid = 1;
+        this.scheduler = new XScheduler(5);
+        this.memoryManager = memoryManager;
+        this.fileSystem = fileSystem;
+    }
+
+    public void boot() {
+        System.out.println("Sistem se podiže...");
+    }
+
+    public int createProcess(String programName, int priority) {
+        PCB newPcb = new PCB(nextPid++, priority, 0, 100);
+        newPcb.setState(ProcessState.READY);
+
+        processTable.add(newPcb);
+        readyQueue.add(newPcb);
+
+        return newPcb.getPid();
+    }
 
 
 
     public void run() {
         while (!readyQueue.isEmpty()) {
             PCB next = scheduler.chooseNext(readyQueue);
+            if (next == null) continue;
 
-            if (next == null) {
-                continue;
-            }
+            System.out.println("CPU preuzima proces ID: " + next.getPid());
 
-            cpu.setCurrent(next);
+            cpu.contextSwitch(next);
+            next.setState(ProcessState.RUNNING);
+
             cpu.executeOneStep();
 
-            if (next.getState() == ProcessState.READY) {
-                readyQueue.add(next);
-            } else if (next.getState()==ProcessState.TERMINATED) {
+            if (next.getState() == ProcessState.TERMINATED) {
                 memoryManager.free(next);
                 processTable.remove(next);
+                System.out.println("Proces " + next.getPid() + " je ZAVRŠEN i memorija je oslobođena.");
+            } else if (next.getState() == ProcessState.WAITING) {
+                blockedQueue.block(next);
+                System.out.println("Proces " + next.getPid() + " je BLOKIRAN (čeka I/O).");
+            } else {
+                next.setState(ProcessState.READY);
+                readyQueue.add(next);
+                System.out.println("Proces " + next.getPid() + " se vraća u ReadyQueue.");
             }
         }
-        System.out.println("Nema vise procesa!");
+        System.out.println("Nema više procesa! Sistem se gasi.");
     }
-
 
 }

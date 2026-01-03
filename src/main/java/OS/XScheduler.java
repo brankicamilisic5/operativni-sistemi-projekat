@@ -1,7 +1,4 @@
 package OS;
-
-
-
 import PROCES.PCB;
 import PROCES.ReadyQueue;
 
@@ -19,5 +16,9 @@ public class XScheduler implements Scheduler {
         PCB next = readyQueue.removeNext();
 
         return next;
+    }
+
+    public int getTimeQuantum() {
+        return timeQuantum;
     }
 }
