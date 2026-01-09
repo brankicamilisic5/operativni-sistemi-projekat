@@ -1,11 +1,14 @@
 package FS;
 
-public class File {
+public class File extends FSNode {
     private StringBuilder content;
 
-    public File(){
-        this.content=new StringBuilder();
+    public File(String name, Directory parent) {
+        super(name, parent);
+        this.content = new StringBuilder();
     }
+
+    //public File(){this.content=new StringBuilder();}
 
     public String read(){
         return content.toString();
