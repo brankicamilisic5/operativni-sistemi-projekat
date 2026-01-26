@@ -27,6 +27,14 @@ public class OSKernel {
         this.fileSystem = fileSystem;
     }
 
+    public List<PCB> getProcessTable() {
+        return processTable;
+    }
+
+    public ReadyQueue getReadyQueue() {
+        return readyQueue;
+    }
+
     public void boot() {
         System.out.println("Sistem se podiže...");
     }
@@ -53,7 +61,7 @@ public class OSKernel {
             cpu.contextSwitch(next);
             next.setState(ProcessState.RUNNING);
 
-            cpu.executeOneStep();
+            cpu.executeOneStep(this.memoryManager);
 
             if (next.getState() == ProcessState.TERMINATED) {
                 memoryManager.free(next);
