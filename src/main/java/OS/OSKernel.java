@@ -37,6 +37,14 @@ public class OSKernel {
 
     public void boot() {
         System.out.println("Sistem se podiže...");
+        fileSystem.createDirectory("Sistem");
+        FS.File program = fileSystem.createFile("autoexec.asm");
+        program.write("LOAD 10\nADD 20\nHALT");
+
+        // Kreiramo jedan sistemski proces koji će stalno biti tu, limit 0 (on ne troši RAM)
+        createProcess("SystemMonitor", 10);
+
+        System.out.println("Sistem spreman. HDD podaci učitani u FileSystem.");
     }
 
     public int createProcess(String programName, int priority) {
