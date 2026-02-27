@@ -2,6 +2,8 @@ package OS;
 import FS.FileSystem;
 import MEMORY.MemoryManager;
 import PROCES.*;
+import SYSCALL.Syscall;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -85,6 +87,21 @@ public class OSKernel {
             }
         }
         System.out.println("Nema više procesa! Sistem se gasi.");
+    }
+
+    public void handleSyscall(PCB p, Syscall syscall) {
+        switch(syscall.getType()) {
+            case READ:
+                // dovrsiti (Tačka 10 i 11)
+                break;
+            case WRITE:
+                System.out.println("[KONZOLA] Ispis (PID " + p.getPid() + "): " + syscall.getArgs());
+                break;
+            case EXIT:
+                p.setState(ProcessState.TERMINATED);
+                System.out.println("[KERNEL] Proces [PID: " + p.getPid() + "] je zatražio završetak rada.");
+                break;
+        }
     }
 
 }
