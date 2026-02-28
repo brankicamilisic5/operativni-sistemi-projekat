@@ -22,4 +22,8 @@ public class ReadyQueue {
     public boolean isEmpty(){
         return queue.isEmpty();
     }
+
+    public void remove(PCB pcb) {
+        queue.remove(pcb);
+    }
 }

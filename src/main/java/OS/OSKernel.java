@@ -1,4 +1,7 @@
 package OS;
+import FS.Assembler;
+import FS.FSNode;
+import FS.File;
 import FS.FileSystem;
 import MEMORY.MemoryManager;
 import PROCES.*;
@@ -48,17 +51,39 @@ public class OSKernel {
 
         System.out.println("Sistem spreman. HDD podaci učitani u FileSystem.");
     }
-
     public int createProcess(String programName, int priority) {
-        PCB newPcb = new PCB(nextPid++, priority, 0, 100);
-        newPcb.setState(ProcessState.READY);
+        FSNode node = fileSystem.resolve(programName);
+        if (!(node instanceof File)) {
+            System.out.println("Greska: Program " + programName + " nije pronadjen.");
+            return -1;
+        }
+        File programFile = (File) node;
 
+
+        Assembler assembler = new Assembler();
+        List<Integer> machineCode = assembler.translate(programFile);
+
+
+        PCB newPcb = new PCB(nextPid++, priority, 0, machineCode.size());
+
+        boolean allocated = memoryManager.allocate(newPcb, machineCode.size());
+        if (!allocated) {
+            System.out.println("Greska: Nema dovoljno RAM-a (Buddy system odbio).");
+            return -1;
+        }
+
+
+        for (int i = 0; i < machineCode.size(); i++) {
+            memoryManager.write(newPcb, i, machineCode.get(i));
+        }
+
+        newPcb.setState(ProcessState.READY);
         processTable.add(newPcb);
         readyQueue.add(newPcb);
 
+        System.out.println("Kernel: Proces " + newPcb.getPid() + " uspesno kreiran i ucitan.");
         return newPcb.getPid();
     }
-
 
 
     public void run() {
@@ -101,6 +126,46 @@ public class OSKernel {
                 p.setState(ProcessState.TERMINATED);
                 System.out.println("[KERNEL] Proces [PID: " + p.getPid() + "] je zatražio završetak rada.");
                 break;
+            case KILL:
+                handleKill(syscall);
+                break;
+        }
+    }
+
+    private void handleKill(Syscall syscall) {
+
+        if (syscall.getArgs().isEmpty()) {
+            System.out.println("[KERNEL] KILL nema PID argument.");
+            return;
+        }
+
+        try {
+            int targetPid = Integer.parseInt(syscall.getArgs().get(0));
+            PCB target = null;
+
+            for (PCB pcb : processTable) {
+                if (pcb.getPid() == targetPid) {
+                    target = pcb;
+                    break;
+                }
+            }
+
+            if (target == null) {
+                System.out.println("[KERNEL] Proces sa PID "
+                        + targetPid + " ne postoji.");
+                return;
+            }
+
+
+            target.setState(ProcessState.TERMINATED);
+
+            readyQueue.remove(target);
+            blockedQueue.unblock(target);
+
+            System.out.println("[KERNEL] Proces " + targetPid + " je označen za gašenje.");
+
+        } catch (NumberFormatException e) {
+            System.out.println("[KERNEL] Neispravan PID.");
         }
     }
 
