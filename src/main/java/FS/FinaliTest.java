@@ -1,6 +1,5 @@
 package FS;
 
-import FS.*;
 import MEMORY.*;
 import PROCES.*;
 import OS.*;
@@ -20,7 +19,7 @@ class FinalniTest {
         List<Integer> kod = assembler.translate(programFile);
         System.out.println("Prevedeni kod: " + kod);
 
-        PCB pcb = new PCB(1, 5, 0, kod.size());
+        PCB pcb = new PCB(1);
 
         boolean uspjelaAlokacija = memoryManager.allocate(pcb, kod.size());
 

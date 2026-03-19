@@ -15,7 +15,7 @@ public class PCB {
     private int limit;
     private List<OpenFileHandle> openFiles;
 
-    public PCB(int pid, int priority, int baseAddress, int limit) {
+    public PCB(int pid) {
         this.pid = pid;
         this.state = ProcessState.NEW;
         this.priority = priority;

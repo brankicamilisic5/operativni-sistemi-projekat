@@ -3,12 +3,16 @@ import FS.Assembler;
 import FS.FSNode;
 import FS.File;
 import FS.FileSystem;
+import IO.IOOperation;
+import IO.IOType;
 import MEMORY.MemoryManager;
 import PROCES.*;
 import SYSCALL.Syscall;
+import DEVICE.IOManager;
+import SYSCALL.SyscallType;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+
 
 public class OSKernel {
     private List<PCB> processTable;
@@ -18,20 +22,32 @@ public class OSKernel {
     private Scheduler scheduler;
     private MemoryManager memoryManager;
     private FileSystem fileSystem;
-    //private IOManager ioManager;
+    private IOManager ioManager;
     private int nextPid;
+    private List<SleepingProcess> sleepQueue;
+
 
     public OSKernel(MemoryManager memoryManager, FileSystem fileSystem) {
         this.processTable = new ArrayList<>();
-        this.readyQueue = new ReadyQueue(new java.util.LinkedList<>());
+        this.readyQueue = new ReadyQueue(new LinkedList<>());
         this.blockedQueue = new BlockedQueue(new ArrayList<PCB>());
         this.cpu = new CPU();
         this.nextPid = 1;
         this.scheduler = new XScheduler(5);
         this.memoryManager = memoryManager;
         this.fileSystem = fileSystem;
+        this.sleepQueue = new ArrayList<>();
     }
 
+    private static class SleepingProcess {
+        PCB process;
+        long wakeUpTime;
+
+        SleepingProcess(PCB p, long wakeUpTime) {
+            this.process = p;
+            this.wakeUpTime = wakeUpTime;
+        }
+    }
     public List<PCB> getProcessTable() {
         return processTable;
     }
@@ -43,7 +59,7 @@ public class OSKernel {
     public void boot() {
         System.out.println("Sistem se podiže...");
         fileSystem.createDirectory("Sistem");
-        FS.File program = fileSystem.createFile("autoexec.asm");
+        File program = fileSystem.createFile("autoexec.asm");
         program.write("LOAD 10\nADD 20\nHALT");
 
         // Kreiramo jedan sistemski proces koji će stalno biti tu, limit 0 (on ne troši RAM)
@@ -64,7 +80,7 @@ public class OSKernel {
         List<Integer> machineCode = assembler.translate(programFile);
 
 
-        PCB newPcb = new PCB(nextPid++, priority, 0, machineCode.size());
+        PCB newPcb = new PCB(nextPid++);
 
         boolean allocated = memoryManager.allocate(newPcb, machineCode.size());
         if (!allocated) {
@@ -87,6 +103,7 @@ public class OSKernel {
 
 
     public void run() {
+
         while (!readyQueue.isEmpty()) {
             PCB next = scheduler.chooseNext(readyQueue);
             if (next == null) continue;
@@ -166,6 +183,178 @@ public class OSKernel {
 
         } catch (NumberFormatException e) {
             System.out.println("[KERNEL] Neispravan PID.");
+        }
+    }
+
+    public void syscall(Syscall request, PCB p) {
+
+        switch (request.getType()) {
+
+            case READ:
+            case WRITE:
+
+                IOType tip;
+
+                if (request.getType() == SyscallType.READ) {
+                    tip = IOType.READ;
+                } else {
+                    tip = IOType.WRITE;
+                }
+
+                IOOperation op = new IOOperation(
+                        tip,
+                        request.getArgs().isEmpty() ? "" : request.getArgs().get(0),
+                        2000
+                );
+
+                p.setState(ProcessState.WAITING);
+                blockedQueue.block(p);
+                cpu.setCurrent(null);
+
+
+                IOManager.requestIO(p, "console", op);
+
+                break;
+
+            case CREATE_PROCESS:
+                createProcess(request.getArgs());
+                break;
+
+            case EXIT:
+                terminateProcess(p);
+                break;
+
+            case SLEEP:
+                if (request.getArgs().isEmpty()) {
+                    System.out.println("Sleep syscall: nedostaje trajanje (ms)");
+                    break;
+                }
+
+                try {
+                    long duration = Long.parseLong(request.getArgs().get(0));
+                    p.setState(ProcessState.WAITING);
+                    cpu.setCurrent(null);
+
+                    sleepQueue.add(new SleepingProcess(p, System.currentTimeMillis() + duration));
+                    System.out.println("Proces " + p.getPid() + " spava " + duration + " ms");
+
+                } catch (NumberFormatException e) {
+                    System.out.println("Sleep syscall: neispravan argument");
+                }
+                break;
+
+            case YIELD:
+                doYield(p);
+                break;
+
+            case KILL:
+                killProcess(request.getArgs());
+                break;
+
+            case OPEN:
+                System.out.println("Open syscall (nije IO u ovom modelu)");
+                break;
+            default:
+                throw new IllegalStateException("Unexpected value: " + request.getType());
+        }
+    }
+
+    public void terminateProcess(PCB p) {
+
+        System.out.println("Gasim proces " + p.getPid());
+
+        p.setState(ProcessState.TERMINATED);
+
+        if (cpu.getCurrent() == p) {
+            cpu.setCurrent(null);
+        }
+
+        readyQueue.remove(p);
+        blockedQueue.remove(p);
+
+    }
+
+    public void doYield(PCB p) {
+
+        System.out.println("Proces " + p.getPid() + " yield");
+
+        p.setState(ProcessState.READY);
+        readyQueue.add(p);
+
+        cpu.setCurrent(null);
+
+        dispatch();
+    }
+
+    public void killProcess(List<String> args) {
+
+        if (args.isEmpty()) return;
+
+        int pid = Integer.parseInt(args.get(0));
+
+        PCB target = findProcess(pid);
+
+        if (target == null) {
+            System.out.println("Proces ne postoji");
+            return;
+        }
+
+        terminateProcess(target);
+    }
+
+    public void createProcess(List<String> args) {
+
+        PCB novi = new PCB(generatePid());
+
+        novi.setState(ProcessState.READY);
+
+        readyQueue.add(novi);
+        processTable.add(novi);
+
+        System.out.println("Kreiran proces " + novi.getPid());
+    }
+
+    private PCB findProcess(int pid) {
+        for (PCB p : processTable) {
+            if (p.getPid() == pid) return p;
+        }
+        return null;
+    }
+
+    private int generatePid() {
+        return processTable.size() + 1;
+    }
+
+    public void dispatch() {
+
+        PCB next = scheduler.chooseNext(readyQueue);
+
+        if (next != null) {
+            next.setState(ProcessState.RUNNING);
+            cpu.setCurrent(next);
+
+            System.out.println("CPU izvršava proces " + next.getPid());
+        }
+    }
+
+    private void wakeUpSleepingProcesses() {
+        long now = System.currentTimeMillis();
+        List<PCB> toWake = new ArrayList<>();
+
+        Iterator<SleepingProcess> iter = sleepQueue.iterator();
+        while (iter.hasNext()) {
+            SleepingProcess sp = iter.next();
+            if (sp.wakeUpTime <= now) {
+                toWake.add(sp.process);
+                iter.remove();
+            }
+        }
+
+
+        for (PCB p : toWake) {
+            p.setState(ProcessState.READY);
+            readyQueue.add(p);
+            System.out.println("Proces " + p.getPid() + " se probudio iz sleep-a");
         }
     }
 

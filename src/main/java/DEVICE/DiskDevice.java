@@ -21,7 +21,6 @@ public class DiskDevice extends IODevice {
             e.printStackTrace();
         }
 
-        queue.unblock(p);
         System.out.println("DiskDevice " + name + "zavrsio operaciju za PCB: " + p.getPid());
 
         busy = false;

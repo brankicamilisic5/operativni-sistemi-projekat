@@ -20,6 +20,10 @@ public class BlockedQueue {
         list.remove(p);
     }
 
+    public void remove(PCB p) {
+        list.remove(p);
+    }
+
     public List<PCB> findByDevice(IODevice sd){
         List<PCB> result = new ArrayList<>();
 
