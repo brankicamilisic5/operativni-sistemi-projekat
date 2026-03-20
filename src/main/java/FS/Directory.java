@@ -24,4 +24,8 @@ public class Directory extends FSNode {
     public List<FSNode> list() {
         return new ArrayList<>(children.values());
     }
+
+    public void removeChild(String name) {
+        children.remove(name);
+    }
 }
