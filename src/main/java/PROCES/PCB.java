@@ -15,14 +15,13 @@ public class PCB {
     private int limit;
     private List<OpenFileHandle> openFiles;
 
-    public PCB(int pid) {
+    public PCB(int pid, int priority) {
         this.pid = pid;
         this.state = ProcessState.NEW;
         this.priority = priority;
         this.programCounter = 0;
         this.registers = new HashMap<>();
-        this.baseAddress = baseAddress;
-        this.limit = limit;
+        this.registers.put("ACC", 0);
         this.openFiles = new ArrayList<>();
     }
 

@@ -26,4 +26,8 @@ public class ReadyQueue {
     public void remove(PCB pcb) {
         queue.remove(pcb);
     }
+
+    public PCB getNextProcess(){
+        return queue.poll();
+    }
 }

@@ -12,23 +12,38 @@ public class BlockedQueue {
         this.list = list;
     }
 
-    public void block(PCB p){
+    public BlockedQueue() {
+        this.list = new ArrayList<>();
+    }
+
+
+    public void block(PCB p) {
+        p.setState(ProcessState.WAITING);
         list.add(p);
     }
 
-    public void unblock(PCB p){
-        list.remove(p);
+
+    public void unblock(PCB p) {
+        if (list.remove(p)) {
+            p.setState(ProcessState.READY);
+        }
     }
 
     public void remove(PCB p) {
         list.remove(p);
     }
 
-    public List<PCB> findByDevice(IODevice sd){
+
+    public List<PCB> findByDevice(IODevice sd) {
         List<PCB> result = new ArrayList<>();
+        for (PCB p : list) {
 
-        //dovrsiti
-
-        return  result;
+            if (p.getState() == ProcessState.WAITING) {
+                result.add(p);
+            }
+        }
+        return result;
     }
+
+
 }

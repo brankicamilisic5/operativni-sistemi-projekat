@@ -11,22 +11,27 @@ public class Assembler {
         List<Integer> code = new ArrayList<>();
 
         String text = file.read();
+        if(text == null) return code;
+
         String[] lines = text.split("\n");
 
         for(String line : lines){
 
             line = line.trim();
 
-            if(line.equals("")) continue;
+            if(line.equals("") || line.startsWith("#")) continue;
 
-            String[] parts = line.split(" ");
+            String[] parts = line.split("\\s+");
 
             String instrukcija = parts[0].toUpperCase();
             int operand = 0;
 
-            if(parts.length > 1)
-                operand = Integer.parseInt(parts[1]);
-
+            try {
+                if(parts.length > 1)
+                    operand = Integer.parseInt(parts[1]);
+            } catch(Exception e){
+                System.out.println("Greska u liniji: " + line);
+            }
 
             switch(instrukcija){
 
@@ -45,10 +50,16 @@ public class Assembler {
                     code.add(operand);
                     break;
 
+                case "SYSCALL":
+                    code.add(9);
+                    break;
+
                 case "HALT":
                     code.add(0);
-                    code.add(0);
                     break;
+
+                default:
+                    System.out.println("Nepoznata instrukcija: " + instrukcija);
             }
         }
 
