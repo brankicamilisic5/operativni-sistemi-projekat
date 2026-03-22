@@ -37,6 +37,7 @@ public class OSKernel {
         this.memoryManager = memoryManager;
         this.fileSystem = fileSystem;
         this.sleepQueue = new ArrayList<>();
+        this.ioManager = new IOManager(this);
     }
 
     private static class SleepingProcess {
@@ -54,6 +55,11 @@ public class OSKernel {
 
     public ReadyQueue getReadyQueue() {
         return readyQueue;
+    }
+
+
+    public BlockedQueue getBlockedQueue() {
+        return blockedQueue;
     }
 
     public void boot() {
@@ -105,6 +111,8 @@ public class OSKernel {
     public void run() {
 
         while (!readyQueue.isEmpty()) {
+
+            wakeUpSleepingProcesses();
             PCB next = scheduler.chooseNext(readyQueue);
             if (next == null) continue;
 
@@ -131,23 +139,79 @@ public class OSKernel {
         System.out.println("Nema više procesa! Sistem se gasi.");
     }
 
-    public void handleSyscall(PCB p, Syscall syscall) {
-        switch(syscall.getType()) {
-            case READ:
-                // dovrsiti (Tačka 10 i 11)
-                break;
-            case WRITE:
-                System.out.println("[KONZOLA] Ispis (PID " + p.getPid() + "): " + syscall.getArgs());
-                break;
-            case EXIT:
-                p.setState(ProcessState.TERMINATED);
-                System.out.println("[KERNEL] Proces [PID: " + p.getPid() + "] je zatražio završetak rada.");
-                break;
-            case KILL:
-                handleKill(syscall);
-                break;
+    public void handleSyscall(Syscall request, PCB p) {
+
+            switch (request.getType()) {
+
+                case READ:
+                case WRITE:
+
+                    IOType tip;
+
+                    if (request.getType() == SyscallType.READ) {
+                        tip = IOType.READ;
+                    } else {
+                        tip = IOType.WRITE;
+                    }
+
+                    IOOperation op = new IOOperation(
+                            tip,
+                            request.getArgs().isEmpty() ? "" : request.getArgs().get(0),
+                            2000
+                    );
+
+                    p.setState(ProcessState.WAITING);
+                    blockedQueue.block(p);
+                    cpu.setCurrent(null);
+
+                    long duration = 0;
+
+                    ioManager.requestIO(p, "console", op);
+
+                    break;
+
+                case CREATE_PROCESS:
+                    createProcess(request.getArgs().get(0), 1);
+                    break;
+
+                case EXIT:
+                    terminateProcess(p);
+                    break;
+
+                case SLEEP:
+                    if (request.getArgs().isEmpty()) {
+                        System.out.println("Sleep syscall: nedostaje trajanje (ms)");
+                        break;
+                    }
+
+                    try {
+                        duration = Long.parseLong(request.getArgs().get(0));
+                        p.setState(ProcessState.WAITING);
+                        cpu.setCurrent(null);
+
+                        sleepQueue.add(new SleepingProcess(p, System.currentTimeMillis() + duration));
+                        System.out.println("Proces " + p.getPid() + " spava " + duration + " ms");
+
+                    } catch (NumberFormatException e) {
+                        System.out.println("Sleep syscall: neispravan argument");
+                    }
+                    break;
+
+                case YIELD:
+                    doYield(p);
+                    break;
+
+                case KILL:
+                    handleKill(request.getArgs());
+                    break;
+
+                case OPEN:
+                    System.out.println("Open syscall (nije IO u ovom modelu)");
+                    break;
+                default:
+                    throw new IllegalStateException("Unexpected value: " + request.getType());
+            }
         }
-    }
 
     private void handleKill(Syscall syscall) {
 
@@ -186,79 +250,6 @@ public class OSKernel {
         }
     }
 
-    public void syscall(Syscall request, PCB p) {
-
-        switch (request.getType()) {
-
-            case READ:
-            case WRITE:
-
-                IOType tip;
-
-                if (request.getType() == SyscallType.READ) {
-                    tip = IOType.READ;
-                } else {
-                    tip = IOType.WRITE;
-                }
-
-                IOOperation op = new IOOperation(
-                        tip,
-                        request.getArgs().isEmpty() ? "" : request.getArgs().get(0),
-                        2000
-                );
-
-                p.setState(ProcessState.WAITING);
-                blockedQueue.block(p);
-                cpu.setCurrent(null);
-
-
-                IOManager.requestIO(p, "console", op);
-
-                break;
-
-            case CREATE_PROCESS:
-                createProcess(request.getArgs());
-                break;
-
-            case EXIT:
-                terminateProcess(p);
-                break;
-
-            case SLEEP:
-                if (request.getArgs().isEmpty()) {
-                    System.out.println("Sleep syscall: nedostaje trajanje (ms)");
-                    break;
-                }
-
-                try {
-                    long duration = Long.parseLong(request.getArgs().get(0));
-                    p.setState(ProcessState.WAITING);
-                    cpu.setCurrent(null);
-
-                    sleepQueue.add(new SleepingProcess(p, System.currentTimeMillis() + duration));
-                    System.out.println("Proces " + p.getPid() + " spava " + duration + " ms");
-
-                } catch (NumberFormatException e) {
-                    System.out.println("Sleep syscall: neispravan argument");
-                }
-                break;
-
-            case YIELD:
-                doYield(p);
-                break;
-
-            case KILL:
-                killProcess(request.getArgs());
-                break;
-
-            case OPEN:
-                System.out.println("Open syscall (nije IO u ovom modelu)");
-                break;
-            default:
-                throw new IllegalStateException("Unexpected value: " + request.getType());
-        }
-    }
-
     public void terminateProcess(PCB p) {
 
         System.out.println("Gasim proces " + p.getPid());
@@ -271,6 +262,7 @@ public class OSKernel {
 
         readyQueue.remove(p);
         blockedQueue.remove(p);
+        processTable.remove(p);
 
     }
 
@@ -286,25 +278,11 @@ public class OSKernel {
         dispatch();
     }
 
-    public void killProcess(List<String> args) {
 
-        if (args.isEmpty()) return;
-
-        int pid = Integer.parseInt(args.get(0));
-
-        PCB target = findProcess(pid);
-
-        if (target == null) {
-            System.out.println("Proces ne postoji");
-            return;
-        }
-
-        terminateProcess(target);
-    }
 
     public void createProcess(List<String> args) {
 
-        PCB novi = new PCB(generatePid());
+        PCB novi = new PCB(nextPid++, 1);
 
         novi.setState(ProcessState.READY);
 
@@ -322,7 +300,7 @@ public class OSKernel {
     }
 
     private int generatePid() {
-        return processTable.size() + 1;
+        return nextPid++;
     }
 
     public void dispatch() {
@@ -352,6 +330,7 @@ public class OSKernel {
 
 
         for (PCB p : toWake) {
+            blockedQueue.unblock(p);
             p.setState(ProcessState.READY);
             readyQueue.add(p);
             System.out.println("Proces " + p.getPid() + " se probudio iz sleep-a");
