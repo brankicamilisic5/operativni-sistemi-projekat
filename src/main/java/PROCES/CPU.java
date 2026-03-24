@@ -1,6 +1,10 @@
 package PROCES;
 
 import MEMORY.MemoryManager;
+import SYSCALL.Syscall;
+import SYSCALL.SyscallType;
+
+import java.util.List;
 
 public class CPU {
 
@@ -40,7 +44,10 @@ public class CPU {
         else if (opcode == 9) { // SYSCALL
             current.setState(ProcessState.WAITING);
             current.setProgramCounter(pc + 1);
+
+            System.out.println("[CPU] Syscall detektovan za PID: " + current.getPid());
             return true;
+
         }
         else if (opcode == 0) { // HALT
             current.setState(ProcessState.TERMINATED);

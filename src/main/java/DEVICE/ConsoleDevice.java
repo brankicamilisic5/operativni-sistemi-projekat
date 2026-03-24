@@ -1,11 +1,13 @@
 package DEVICE;
 import IO.IOOperation;
+import IO.IOType;
+import PROCES.PCB;
 
 
 public class ConsoleDevice extends IODevice {
 
     public ConsoleDevice(String name) {
-        super(name);
+        super(name,null);
     }
 
     @Override

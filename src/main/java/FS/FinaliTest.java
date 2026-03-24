@@ -1,48 +1,52 @@
 package FS;
 
+import DEVICE.DiskDevice;
 import MEMORY.*;
 import PROCES.*;
 import OS.*;
-import java.util.List;
+
 
 class FinalniTest {
-    public static void main(String[] args) {
-        RAM ram = new RAM(256);
-        MemoryManager memoryManager = new MemoryManager(ram);
-        FileSystem fs = new FileSystem(null);
-        Assembler assembler = new Assembler();
-        OSKernel kernel = new OSKernel(memoryManager, fs);
 
-        File programFile = fs.createFile("mojProgram.asm");
-        programFile.write("LOAD 10\nADD 5\nHALT");
+        public static void main(String[] args) {
 
-        List<Integer> kod = assembler.translate(programFile);
-        System.out.println("Prevedeni kod: " + kod);
+            RAM ram = new RAM(1024);
+            MemoryManager mm = new MemoryManager(ram);
 
-        PCB pcb = new PCB(1);
 
-        boolean uspjelaAlokacija = memoryManager.allocate(pcb, kod.size());
+            BlockedQueue blockedQueue = new BlockedQueue();
+            DiskDevice hdd = new DiskDevice("HDD", blockedQueue);
 
-        if (uspjelaAlokacija) {
-            System.out.println("Neprekidna alokacija uspjela!");
-            System.out.println("Baza procesa: " + pcb.getBaseAddress());
 
-            for (int i = 0; i < kod.size(); i++) {
-                memoryManager.write(pcb, i, kod.get(i));
+            FileSystem fs = new FileSystem(hdd);
+            OSKernel kernel = new OSKernel(mm, fs);
+
+            System.out.println("--- START SIMULACIJE ---");
+
+
+            kernel.boot();
+            fs.createDirectory("/korisnik");
+
+            /* Kreiranje fajla i pisanje Asemblerskog koda
+            LOAD 10 (stavi 10 u ACC), ADD 20 (ACC postane 30), HALT (kraj) */
+            File mojProgram = fs.createFile("/korisnik/projekat.asm");
+            mojProgram.write("LOAD 10\nADD 20\nHALT");
+
+            System.out.println("\n--- POKRETANJE PROCESA (Scenario 1.7) ---");
+
+
+            int pid = kernel.createProcess("/korisnik/projekat.asm", 1);
+
+            if (pid != -1) {
+
+                System.out.println("\nTabela procesa pre izvršavanja:");
+                kernel.getProcessTable().forEach(p -> System.out.println("PID: " + p.getPid() + " Status: " + p.getState()));
+
+
+                kernel.run();
             }
 
-            System.out.println("Stanje RAM-a: " + memoryManager.dumpMemory());
-
-            pcb.setState(ProcessState.READY);
-            kernel.getProcessTable().add(pcb);
-            kernel.getReadyQueue().add(pcb);
-
-            System.out.println("\nPOKRETANJE IZVRŠAVANJA");
-            kernel.run();
-
-            System.out.println("\nREZULTAT");
-            System.out.println("Registri procesa (ACC): " + pcb.getRegisters().get("ACC"));
-            System.out.println("Stanje procesa: " + pcb.getState());
+            System.out.println("\n--- STATUS MEMORIJE NAKON GAŠENJA ---");
+            System.out.println("Preostali segmenti u RAM-u: " + mm.dumpMemory().substring(0, 50) + "...");
         }
     }
-}

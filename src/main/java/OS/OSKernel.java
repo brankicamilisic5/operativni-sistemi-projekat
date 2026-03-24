@@ -67,7 +67,7 @@ public class OSKernel {
         fileSystem.createDirectory("Sistem");
         File program = fileSystem.createFile("autoexec.asm");
         program.write("LOAD 10\nADD 20\nHALT");
-
+        fileSystem.createFile("SystemMonitor");
         // Kreiramo jedan sistemski proces koji će stalno biti tu, limit 0 (on ne troši RAM)
         createProcess("SystemMonitor", 10);
 
@@ -86,7 +86,7 @@ public class OSKernel {
         List<Integer> machineCode = assembler.translate(programFile);
 
 
-        PCB newPcb = new PCB(nextPid++);
+        PCB newPcb = new PCB(nextPid++, 1);
 
         boolean allocated = memoryManager.allocate(newPcb, machineCode.size());
         if (!allocated) {
@@ -109,34 +109,45 @@ public class OSKernel {
 
 
     public void run() {
+        int quantum = ((XScheduler)scheduler).getTimeQuantum();
+        int brzina = 500;
 
         while (!readyQueue.isEmpty()) {
-
             wakeUpSleepingProcesses();
             PCB next = scheduler.chooseNext(readyQueue);
             if (next == null) continue;
 
-            System.out.println("CPU preuzima proces ID: " + next.getPid());
-
+            System.out.println("\n>>> CPU preuzima PID: " + next.getPid());
             cpu.contextSwitch(next);
             next.setState(ProcessState.RUNNING);
 
-            cpu.executeOneStep(this.memoryManager);
+
+            for (int i = 0; i < quantum; i++) {
+                boolean stop = cpu.executeOneStep(this.memoryManager);
+
+                try { Thread.sleep(brzina); } catch (InterruptedException e) {}
+
+                if (stop || next.getState() == ProcessState.TERMINATED || next.getState() == ProcessState.WAITING) {
+                    break;
+                }
+            }
+
 
             if (next.getState() == ProcessState.TERMINATED) {
                 memoryManager.free(next);
                 processTable.remove(next);
-                System.out.println("Proces " + next.getPid() + " je ZAVRŠEN i memorija je oslobođena.");
+                System.out.println("---Proces " + next.getPid() + " ZAVRŠEN i memorija oslobođena.");
             } else if (next.getState() == ProcessState.WAITING) {
                 blockedQueue.block(next);
-                System.out.println("Proces " + next.getPid() + " je BLOKIRAN (čeka I/O).");
+                System.out.println("---Proces " + next.getPid() + " BLOKIRAN.");
             } else {
+
                 next.setState(ProcessState.READY);
                 readyQueue.add(next);
-                System.out.println("Proces " + next.getPid() + " se vraća u ReadyQueue.");
+                System.out.println("--- PID " + next.getPid() + " istakao kvant, vraćen u ReadyQueue.");
             }
         }
-        System.out.println("Nema više procesa! Sistem se gasi.");
+        System.out.println("\nNema više procesa! Sistem se gasi.");
     }
 
     public void handleSyscall(Syscall request, PCB p) {
@@ -202,7 +213,7 @@ public class OSKernel {
                     break;
 
                 case KILL:
-                    handleKill(request.getArgs());
+                    handleKill(request);
                     break;
 
                 case OPEN:
