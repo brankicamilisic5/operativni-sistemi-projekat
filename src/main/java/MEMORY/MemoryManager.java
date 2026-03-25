@@ -15,6 +15,8 @@ public class MemoryManager {
         segments.add(new MemorySegment(null, 0, ram.size()));
     }
 
+
+
     private int nextPowerOfTwo(int n) {
         int p = 1;
         while (p < n) p *= 2;

@@ -348,4 +348,7 @@ public class OSKernel {
         }
     }
 
+    public MemoryManager getMemoryManager() {
+        return memoryManager;
+    }
 }
