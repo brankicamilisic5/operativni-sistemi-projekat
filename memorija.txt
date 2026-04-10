@@ -1,0 +1,4 @@
+---INICIJALIZACIJA SISTEMA---
+Direktorijumi: /Sistem, /User
+Fajlovi: kernel.sys, shell.exe
+Sistemski procesi: Monitor, Idle, NetworkStack

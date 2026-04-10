@@ -1,10 +1,13 @@
 package OS;
+import DEVICE.ConsoleDevice;
+import DEVICE.DiskDevice;
 import FS.Assembler;
 import FS.FSNode;
 import FS.File;
 import FS.FileSystem;
 import IO.IOOperation;
 import IO.IOType;
+import MEMORY.DMAController;
 import MEMORY.MemoryManager;
 import PROCES.*;
 import SYSCALL.Syscall;
@@ -25,6 +28,7 @@ public class OSKernel {
     private IOManager ioManager;
     private int nextPid;
     private List<SleepingProcess> sleepQueue;
+    private DMAController dma;
 
 
     public OSKernel(MemoryManager memoryManager, FileSystem fileSystem) {
@@ -38,6 +42,14 @@ public class OSKernel {
         this.fileSystem = fileSystem;
         this.sleepQueue = new ArrayList<>();
         this.ioManager = new IOManager(this);
+        this.ioManager.addDevice(new ConsoleDevice("console"));
+        this.ioManager.addDevice(new DiskDevice("disk", this.blockedQueue));
+        dma = new DMAController(this);
+    }
+
+
+    public DMAController getDma() {
+        return dma;
     }
 
     private static class SleepingProcess {
@@ -64,15 +76,19 @@ public class OSKernel {
 
     public void boot() {
         System.out.println("Sistem se podiže...");
-        fileSystem.createDirectory("Sistem");
-        File program = fileSystem.createFile("autoexec.asm");
-        program.write("LOAD 10\nADD 20\nHALT");
-        fileSystem.createFile("SystemMonitor");
-        // Kreiramo jedan sistemski proces koji će stalno biti tu, limit 0 (on ne troši RAM)
-        createProcess("SystemMonitor", 10);
 
-        System.out.println("Sistem spreman. HDD podaci učitani u FileSystem.");
+        fileSystem.createDirectory("Sistem");
+        File monitorFile = fileSystem.createFile("Sistem/SystemMonitor");
+        if (monitorFile != null) {
+            monitorFile.write("HALT");
+        }
+
+        String initialData = fileSystem.readFromTxt("memorija.txt");
+        dma.transfer("HDD", "RAM", initialData, null);
+        createProcess("Sistem/SystemMonitor", 10);
+        System.out.println("Sistem spreman.");
     }
+
     public int createProcess(String programName, int priority) {
         FSNode node = fileSystem.resolve(programName);
         if (!(node instanceof File)) {
