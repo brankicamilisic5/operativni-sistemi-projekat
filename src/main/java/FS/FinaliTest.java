@@ -6,6 +6,7 @@ import PROCES.*;
 import OS.*;
 import SYSCALL.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 
@@ -17,7 +18,7 @@ class FinalniTest {
         MemoryManager mm = new MemoryManager(ram);
 
 
-        BlockedQueue blockedQueue = new BlockedQueue();
+        BlockedQueue blockedQueue = new BlockedQueue(new ArrayList<>());
         DiskDevice hdd = new DiskDevice("HDD", blockedQueue);
 
 
@@ -35,7 +36,7 @@ class FinalniTest {
         File mojProgram = fs.createFile("/korisnik/projekat.asm");
         mojProgram.write("LOAD 10\nADD 20\nHALT");
 
-        System.out.println("\n--- POKRETANJE PROCESA (Scenario 1.7) ---");
+        System.out.println("\n--- POKRETANJE PROCESA ---");
 
 
         int pid = kernel.createProcess("/korisnik/projekat.asm", 1);

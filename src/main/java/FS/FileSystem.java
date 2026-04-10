@@ -5,6 +5,10 @@ import IO.IOOperation;
 import IO.IOType;
 import PROCES.OpenFileHandle;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
 public class FileSystem {
     private Directory root;
     private DiskDevice disk;
@@ -158,6 +162,22 @@ public class FileSystem {
             return new OpenFileHandle((File) node, 0, FileMode.WRITE);
         }
         return null;
+    }
+
+    public String readFromTxt(String fileName) {
+        try {
+            String content = Files.readString(Paths.get(fileName));
+            System.out.println("FileSystem: Uspješno pročitan fajl " + fileName);
+
+            IOOperation op = new IOOperation(IOType.READ, "BOOT_LOAD", 5);
+            disk.startOperation(op, null);
+
+            return content;
+
+        } catch (IOException e) {
+            System.out.println("Greška: Nije moguće pročitati " + fileName + ". Provjerite da li fajl postoji.");
+            return "DEFAULT_SYSTEM_DATA";
+        }
     }
 
 }
