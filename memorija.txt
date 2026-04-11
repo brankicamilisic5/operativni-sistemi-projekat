@@ -1,4 +1,9 @@
----INICIJALIZACIJA SISTEMA---
-Direktorijumi: /Sistem, /User
-Fajlovi: kernel.sys, shell.exe
-Sistemski procesi: Monitor, Idle, NetworkStack
+DIR /Sistem
+DIR /User
+DIR /User/dokumenti
+FILE /Sistem/kernel.sys HALT
+FILE /Sistem/idle.asm LOAD 1\nHALT
+FILE /Sistem/network.asm LOAD 2\nADD 1\nHALT
+FILE /User/hello.asm LOAD 5\nADD 3\nHALT
+PROCESS /Sistem/idle.asm
+PROCESS /Sistem/network.asm

@@ -54,7 +54,9 @@ public class IOManager {
     }
 
     public void completeIO(IODevice device, PCB p) {
-        System.out.println("IO završen -> proces ide u READY");
+        device.setBusy(false);
+
+        System.out.println("IO završen za PID " + p.getPid() + " -> proces ide u READY");
 
         kernel.getBlockedQueue().unblock(p);
         p.setState(ProcessState.READY);

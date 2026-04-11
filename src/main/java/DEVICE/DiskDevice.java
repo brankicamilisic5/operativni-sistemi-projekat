@@ -17,14 +17,9 @@ public class DiskDevice extends IODevice {
         String pidInfo = (p == null) ? "KERNEL" : String.valueOf(p.getPid());
 
         System.out.println("DiskDevice " + name + " startuje operaciju: " + op + " za: " + pidInfo);
-        try {
-            Thread.sleep(op.getDuration());
-        } catch(InterruptedException e){
-            e.printStackTrace();
-        }
 
-        System.out.println("DiskDevice " + name + " zavrsio operaciju za: " + pidInfo);
-        busy = false;
+
+
     }
 
 

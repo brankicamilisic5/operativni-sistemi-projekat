@@ -105,7 +105,16 @@ public class FileSystem {
         String name = getNameFromPath(path);
         Directory parent = getParentDirectory(path);
 
-        if (resolve(path) != null || parent == null) {
+        FSNode existing = resolve(path);
+        if (existing != null) {
+            if (existing instanceof File) {
+                return (File) existing;
+            } else {
+                System.out.println("Greška: Već postoji direktorijum sa imenom " + name);
+                return null;
+            }
+        }
+        if (parent == null) {
             System.out.println("Greška pri kreiranju fajla.");
             return null;
         }

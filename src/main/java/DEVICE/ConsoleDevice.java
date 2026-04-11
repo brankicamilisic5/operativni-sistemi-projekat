@@ -22,14 +22,6 @@ public class ConsoleDevice extends IODevice {
             System.out.println("[CONSOLE] Ispis: " + op.getData());
         }
 
-        try {
-            Thread.sleep(op.getDuration());
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
 
-        busy = false;
-
-        System.out.println("[CONSOLE] Završeno za proces " + p.getPid());
     }
 }

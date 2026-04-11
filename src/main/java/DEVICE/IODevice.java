@@ -26,5 +26,9 @@ public abstract class IODevice {
         return name;
     }
 
+    public void setBusy(boolean busy) {
+        this.busy = busy;
+    }
+
 }
 

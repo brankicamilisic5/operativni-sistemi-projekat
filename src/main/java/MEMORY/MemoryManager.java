@@ -51,6 +51,8 @@ public class MemoryManager {
 
             if (s.getLimit() == need) {
                 s.setOwner(p);
+                p.setBaseAddress(s.getBase());
+                p.setLimit(s.getLimit());
                 System.out.println("Allocated: PID=" + p.getPid() + ", Base=" + s.getBase() + ", Limit=" + s.getLimit());
                 return true;
             } else {

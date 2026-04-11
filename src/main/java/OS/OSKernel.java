@@ -29,18 +29,19 @@ public class OSKernel {
     private int nextPid;
     private List<SleepingProcess> sleepQueue;
     private DMAController dma;
+    private int cpuBrzina = 500;
 
 
     public OSKernel(MemoryManager memoryManager, FileSystem fileSystem) {
-        this.processTable = new ArrayList<>();
+        this.processTable =Collections.synchronizedList(new ArrayList<>());
         this.readyQueue = new ReadyQueue(new LinkedList<>());
-        this.blockedQueue = new BlockedQueue(new ArrayList<PCB>());
+        this.blockedQueue = new BlockedQueue(Collections.synchronizedList(new ArrayList<PCB>()));
         this.cpu = new CPU();
         this.nextPid = 1;
         this.scheduler = new XScheduler(5);
         this.memoryManager = memoryManager;
         this.fileSystem = fileSystem;
-        this.sleepQueue = new ArrayList<>();
+        this.sleepQueue = Collections.synchronizedList(new ArrayList<>());
         this.ioManager = new IOManager(this);
         this.ioManager.addDevice(new ConsoleDevice("console"));
         this.ioManager.addDevice(new DiskDevice("disk", this.blockedQueue));
@@ -77,16 +78,56 @@ public class OSKernel {
     public void boot() {
         System.out.println("Sistem se podiže...");
 
-        fileSystem.createDirectory("Sistem");
-        File monitorFile = fileSystem.createFile("Sistem/SystemMonitor");
-        if (monitorFile != null) {
-            monitorFile.write("HALT");
-        }
-
         String initialData = fileSystem.readFromTxt("memorija.txt");
         dma.transfer("HDD", "RAM", initialData, null);
-        createProcess("Sistem/SystemMonitor", 10);
+
+        try { Thread.sleep(500); } catch (InterruptedException e) {}
+
+        parseAndLoadMemory(initialData);
+
         System.out.println("Sistem spreman.");
+    }
+
+    private void parseAndLoadMemory(String data) {
+        if (data == null || data.equals("DEFAULT_SYSTEM_DATA")) {
+
+            fileSystem.createDirectory("/Sistem");
+            fileSystem.createDirectory("/User");
+            File f = fileSystem.createFile("/Sistem/SystemMonitor");
+            if (f != null) f.write("HALT");
+            createProcess("/Sistem/SystemMonitor", 10);
+            return;
+        }
+
+        String[] lines = data.split("\n");
+
+        for (String line : lines) {
+            line = line.trim();
+            if (line.isEmpty() || line.startsWith("#")) continue;
+
+            String[] parts = line.split("\\s+", 3);
+            if (parts.length < 2) continue;
+
+            String tip = parts[0].toUpperCase();
+            String putanja = parts[1];
+
+            switch (tip) {
+                case "DIR":
+                    fileSystem.createDirectory(putanja);
+                    break;
+
+                case "FILE":
+                    File f = fileSystem.createFile(putanja);
+                    if (f != null && parts.length == 3) {
+                        f.write(parts[2].replace("\\n", "\n"));
+                    }
+                    break;
+
+                case "PROCESS":
+                    createProcess(putanja, 1);
+                    break;
+            }
+        }
     }
 
     public int createProcess(String programName, int priority) {
@@ -123,10 +164,18 @@ public class OSKernel {
         return newPcb.getPid();
     }
 
+    public void setCpuBrzina(int ms) {
+        this.cpuBrzina = ms;
+        System.out.println("[KERNEL] CPU brzina postavljena na " + ms + "ms po taktu.");
+    }
+
+    public int getCpuBrzina() {
+        return cpuBrzina;
+    }
 
     public void run() {
         int quantum = ((XScheduler)scheduler).getTimeQuantum();
-        int brzina = 500;
+        int brzina =  cpuBrzina;
 
         while (!readyQueue.isEmpty()) {
             wakeUpSleepingProcesses();
@@ -269,6 +318,10 @@ public class OSKernel {
 
             readyQueue.remove(target);
             blockedQueue.unblock(target);
+
+            synchronized(sleepQueue) {
+                sleepQueue.removeIf(sp -> sp.process.getPid() == targetPid);
+            }
 
             System.out.println("[KERNEL] Proces " + targetPid + " je označen za gašenje.");
 

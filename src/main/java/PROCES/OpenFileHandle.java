@@ -14,4 +14,8 @@ public class OpenFileHandle {
         this.mode=mode;
     }
 
+    public File getFile() {
+        return file;
+    }
+
 }
