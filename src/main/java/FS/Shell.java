@@ -73,8 +73,6 @@ public class Shell {
                     if (parts.length > 1) {
                         int pid = kernel.createProcess(parts[1], 1);
                         if (pid != -1) {
-                            // Neblokirajuće — Shell ostaje aktivan
-                            new Thread(() -> kernel.run()).start();
                             System.out.println("Proces " + pid + " pokrenut.");
                         }
                     }

@@ -160,7 +160,7 @@ public class OSKernel {
         processTable.add(newPcb);
         readyQueue.add(newPcb);
 
-        System.out.println("Kernel: Proces " + newPcb.getPid() + " uspesno kreiran i ucitan.");
+        System.out.println("Kernel: Proces " + newPcb.getPid() + " uspjesno kreiran i ucitan.");
         return newPcb.getPid();
     }
 
@@ -174,23 +174,30 @@ public class OSKernel {
     }
 
     public void run() {
-        int quantum = ((XScheduler)scheduler).getTimeQuantum();
-        int brzina =  cpuBrzina;
+        System.out.println("[KERNEL] Procesor je startovan u pozadini.");
 
-        while (!readyQueue.isEmpty()) {
+        while (true) {
             wakeUpSleepingProcesses();
+
             PCB next = scheduler.chooseNext(readyQueue);
-            if (next == null) continue;
+
+            if (next == null) {
+                try { Thread.sleep(200); } catch (InterruptedException e) {}
+                continue;
+            }
+
+            int quantum = ((XScheduler)scheduler).getTimeQuantum();
+            int brzina = cpuBrzina;
 
             System.out.println("\n>>> CPU preuzima PID: " + next.getPid());
             cpu.contextSwitch(next);
             next.setState(ProcessState.RUNNING);
 
-
             for (int i = 0; i < quantum; i++) {
                 boolean stop = cpu.executeOneStep(this.memoryManager);
 
-                try { Thread.sleep(brzina); } catch (InterruptedException e) {}
+                try { Thread.sleep(brzina);
+                } catch (InterruptedException e) {}
 
                 if (stop || next.getState() == ProcessState.TERMINATED || next.getState() == ProcessState.WAITING) {
                     break;
@@ -201,18 +208,16 @@ public class OSKernel {
             if (next.getState() == ProcessState.TERMINATED) {
                 memoryManager.free(next);
                 processTable.remove(next);
-                System.out.println("---Proces " + next.getPid() + " ZAVRŠEN i memorija oslobođena.");
+                System.out.println("--- Proces " + next.getPid() + " ZAVRŠEN.");
             } else if (next.getState() == ProcessState.WAITING) {
                 blockedQueue.block(next);
-                System.out.println("---Proces " + next.getPid() + " BLOKIRAN.");
+                System.out.println("--- Proces " + next.getPid() + " BLOKIRAN (I/O).");
             } else {
-
                 next.setState(ProcessState.READY);
                 readyQueue.add(next);
-                System.out.println("--- PID " + next.getPid() + " istakao kvant, vraćen u ReadyQueue.");
+                System.out.println("--- PID " + next.getPid() + " vraćen u ReadyQueue.");
             }
         }
-        System.out.println("\nNema više procesa! Sistem se gasi.");
     }
 
     public void handleSyscall(Syscall request, PCB p) {

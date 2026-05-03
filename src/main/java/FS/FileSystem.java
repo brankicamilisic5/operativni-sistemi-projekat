@@ -101,6 +101,8 @@ public class FileSystem {
 
 
 
+    private boolean[] bitVector = new boolean[128];
+
     public File createFile(String path) {
         String name = getNameFromPath(path);
         Directory parent = getParentDirectory(path);
@@ -121,6 +123,16 @@ public class FileSystem {
 
         File file = new File(name, parent);
         parent.addChild(file);
+
+
+        for (int i = 0; i < bitVector.length; i++) {
+            if (!bitVector[i]) {
+                bitVector[i] = true;
+                file.setDiskBlock(i);
+                System.out.println("[BitVector] Zauzet fizički blok: " + i);
+                break;
+            }
+        }
 
         IOOperation op = new IOOperation(IOType.WRITE, "Metadata for " + name, 1);
         disk.startOperation(op, null);
@@ -154,10 +166,14 @@ public class FileSystem {
                 cleanupResources(child);
             }
         } else if (node instanceof File file) {
+            int blockIdx = file.getDiskBlock();
+            if (blockIdx >= 0 && blockIdx < bitVector.length) {
+                bitVector[blockIdx] = false;
+                System.out.println("[BitVector] Oslobođen blok: " + blockIdx + " za fajl: " + file.getName());
+            }
+
             IOOperation op = new IOOperation(IOType.WRITE, "DELETE " + file.getName(), 2);
             disk.startOperation(op, null);
-
-            System.out.println("DiskDevice: Oslobođen prostor za " + file.getName());
         }
     }
 
@@ -188,5 +204,7 @@ public class FileSystem {
             return "DEFAULT_SYSTEM_DATA";
         }
     }
+
+
 
 }
