@@ -25,6 +25,11 @@ public class PCB {
         this.openFiles = new ArrayList<>();
     }
 
+    private String type = "USER";
+
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
+
     public int getPid() {return pid;}
     public void setPid(int pid) {this.pid = pid;}
 
@@ -48,6 +53,11 @@ public class PCB {
 
     public List<OpenFileHandle> getOpenFiles() {return openFiles;}
     public void setOpenFiles(List<OpenFileHandle> openFiles) {this.openFiles = openFiles;}
+
+    private int executedInstructions = 0;
+
+    public int getExecutedInstructions() { return executedInstructions; }
+    public void incrementExecuted() { executedInstructions++; }
 
     @Override
     public String toString() {

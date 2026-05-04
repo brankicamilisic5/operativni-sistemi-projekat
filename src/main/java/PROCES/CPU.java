@@ -23,6 +23,7 @@ public class CPU {
         int opcode = mm.read(current, pc);
 
         cycleCount++;
+        current.incrementExecuted();
 
         if (opcode == 1) { // LOAD
             int value = mm.read(current, pc + 1);

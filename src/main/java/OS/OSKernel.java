@@ -124,7 +124,14 @@ public class OSKernel {
                     break;
 
                 case "PROCESS":
-                    createProcess(putanja, 1);
+                    int sysPid = createProcess(putanja, 1);
+                    if (sysPid != -1) {
+                        for (PCB p : processTable) {
+                            if (p.getPid() == sysPid) {
+                                p.setType("SYSTEM");
+                            }
+                        }
+                    }
                     break;
             }
         }
@@ -207,7 +214,7 @@ public class OSKernel {
 
             if (next.getState() == ProcessState.TERMINATED) {
                 memoryManager.free(next);
-                processTable.remove(next);
+                //processTable.remove(next);
                 System.out.println("--- Proces " + next.getPid() + " ZAVRŠEN.");
             } else if (next.getState() == ProcessState.WAITING) {
                 blockedQueue.block(next);

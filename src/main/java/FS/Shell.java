@@ -55,16 +55,16 @@ public class Shell {
                     break;
 
                 case "ps":
-                    System.out.println("PID\tPC\tStatus\t\tAdresa\tLimit");
+                    System.out.println("PID\tPC\tStatus\t\tAdresa\tLimit\tInstrukcija\tTip");
                     synchronized(kernel.getProcessTable()) {
                         kernel.getProcessTable().forEach(p ->
                                 System.out.println(p.getPid() + "\t" + p.getProgramCounter() + "\t" +
-                                        p.getState() + "\t" + p.getBaseAddress() + "\t" + p.getLimit()));
+                                        p.getState() + "\t\t" + p.getBaseAddress() + "\t" +
+                                        p.getLimit() + "\t\t" + p.getExecutedInstructions()+"\t\t"+p.getType()));
                     }
                     break;
                 case "mkdir":
                     if (parts.length > 1) {
-                        // Puna putanja da bi se kreirao na tačnom mjestu
                         fs.createDirectory(getFullPath(currentDirectory) + "/" + parts[1]);
                     }
                     break;
@@ -112,7 +112,10 @@ public class Shell {
 
                 case "open":
                     if (parts.length > 1) {
-                        FSNode node = fs.resolve(parts[1]);
+                        String fullPath = parts[1].startsWith("/") ?
+                                parts[1] :
+                                getFullPath(currentDirectory) + "/" + parts[1];
+                        FSNode node = fs.resolve(fullPath);
                         if (!(node instanceof File)) {
                             System.out.println("Fajl ne postoji: " + parts[1]);
                             break;
