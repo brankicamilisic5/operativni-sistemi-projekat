@@ -18,12 +18,22 @@ public class DiskDevice extends IODevice {
     public void startOperation(IOOperation op, PCB p){
         busy = true;
 
-        int requestedBlock = (int)(Math.random() * 128);
-
         List<Integer> requests = new ArrayList<>();
-        requests.add(requestedBlock);
-        requests.add((int)(Math.random() * 128));
-        requests.add((int)(Math.random() * 128));
+
+        try {
+            String[] parts = op.getData().split(",");
+            for(String part : parts) {
+                requests.add(Integer.parseInt(part.trim()));
+            }
+        } catch (Exception e) {
+            requests.add((int)(Math.random() * 128));
+        }
+
+        if (requests.isEmpty()) {
+            System.out.println("[DISK] Primljen prazan zahtjev. Operacija se preskače.");
+            new Thread(() -> {busy = false;}).start();
+            return;
+        }
 
 
         if (movingUp) {
@@ -54,6 +64,5 @@ public class DiskDevice extends IODevice {
         String owner = (p == null) ? "KERNEL" : "PID:" + p.getPid();
         System.out.println("DiskDevice " + name + ": Operacija " + op.getType() + " uspješno završena za " + owner + ".\n");
 
-        busy = false;
     }
 }

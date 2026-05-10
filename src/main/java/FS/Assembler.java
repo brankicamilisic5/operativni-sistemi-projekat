@@ -50,6 +50,11 @@ public class Assembler {
                     code.add(operand);
                     break;
 
+                case "IDLE":
+                    code.add(7);
+                    code.add(operand);
+                    break;
+
                 case "SYSCALL":
                     code.add(9);
                     break;

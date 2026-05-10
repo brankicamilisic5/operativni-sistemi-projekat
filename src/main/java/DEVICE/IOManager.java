@@ -30,13 +30,15 @@ public class IOManager {
             return;
         }
 
-        if (device.isBusy()) {
-            System.out.println("Uređaj je zauzet -> proces ide u BLOCKED!");
+        synchronized (device) {
+            if (device.isBusy()) {
+                System.out.println(deviceName + " zauzet -> PID:" + p.getPid() + " u BLOCKED.");
+                p.setState(ProcessState.WAITING);
+                kernel.getBlockedQueue().block(p);
+                return;
+            }
 
-            p.setState(ProcessState.WAITING);
-            kernel.getBlockedQueue().block(p);
-
-            return;
+            device.setBusy(true);
         }
 
         device.startOperation(op, p);
@@ -54,14 +56,15 @@ public class IOManager {
     }
 
     public void completeIO(IODevice device, PCB p) {
-        device.setBusy(false);
-
-        System.out.println("IO završen za PID " + p.getPid() + " -> proces ide u READY");
-
+        synchronized (device) {
+            device.setBusy(false);
+        }
         kernel.getBlockedQueue().unblock(p);
         p.setState(ProcessState.READY);
         kernel.getReadyQueue().add(p);
+        kernel.handleIOCompletion(device);
     }
+
 
     private IODevice findDevice(String name) {
         for (IODevice d : devices) {

@@ -3,8 +3,6 @@ package FS;
 import DEVICE.DiskDevice;
 import IO.IOOperation;
 import IO.IOType;
-import PROCES.OpenFileHandle;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -69,7 +67,7 @@ public class FileSystem {
     }
 
     private String getFullPath(FSNode node) {
-        if (node.getParent() == null) return "/";
+        if (node.getParent() == null) return "";
         return getFullPath(node.getParent()) + "/" + node.getName();
     }
 
@@ -88,6 +86,7 @@ public class FileSystem {
                 Directory newDir = new Directory(part, current);
                 current.addChild(newDir);
                 System.out.println("Kreiran direktorijum: " + getFullPath(newDir));
+
                 current = newDir;
             } else if (next instanceof Directory) {
                 current = (Directory) next;
@@ -134,7 +133,10 @@ public class FileSystem {
             }
         }
 
-        IOOperation op = new IOOperation(IOType.WRITE, "Metadata for " + name, 1);
+        int blok = file.getDiskBlock();
+        int r1 = (int)(Math.random() * 128);
+        int r2 = (int)(Math.random() * 128);
+        IOOperation op = new IOOperation(IOType.WRITE, blok + ", " + r1 + ", " + r2, 1);
         disk.startOperation(op, null);
 
         return file;
@@ -171,40 +173,33 @@ public class FileSystem {
                 bitVector[blockIdx] = false;
                 System.out.println("[BitVector] Oslobođen blok: " + blockIdx + " za fajl: " + file.getName());
             }
+            int r1 = (int)(Math.random() * 128);
+            int r2 = (int)(Math.random() * 128);
 
-            IOOperation op = new IOOperation(IOType.WRITE, "DELETE " + file.getName(), 2);
+            IOOperation op = new IOOperation(IOType.WRITE, blockIdx + ", " + r1 + ", " + r2, 2);
             disk.startOperation(op, null);
         }
     }
 
-    public OpenFileHandle open(String path) {
-        FSNode node = resolve(path);
-        if (node instanceof File) {
-            IOOperation op = new IOOperation(IOType.READ, path, 1);
-            disk.startOperation(op, null);
 
-            System.out.println("FileSystem: Otvoren handle za " + path);
-            return new OpenFileHandle((File) node, 0, FileMode.WRITE);
-        }
-        return null;
-    }
 
     public String readFromTxt(String fileName) {
         try {
             String content = Files.readString(Paths.get(fileName));
             System.out.println("FileSystem: Uspješno pročitan fajl " + fileName);
 
-            IOOperation op = new IOOperation(IOType.READ, "BOOT_LOAD", 5);
+            int r1 = (int)(Math.random() * 128);
+            int r2 = (int)(Math.random() * 128);
+            int r3 = (int)(Math.random() * 128);
+            IOOperation op = new IOOperation(IOType.READ, r1 + ", " + r2 + ", " + r3, 5);
             disk.startOperation(op, null);
 
             return content;
 
         } catch (IOException e) {
-            System.out.println("Greška: Nije moguće pročitati " + fileName + ". Provjerite da li fajl postoji.");
+            System.out.println("Greška: Nije moguće pročitati " + fileName);
             return "DEFAULT_SYSTEM_DATA";
         }
     }
-
-
 
 }

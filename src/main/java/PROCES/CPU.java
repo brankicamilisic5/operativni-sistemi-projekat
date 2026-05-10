@@ -1,19 +1,22 @@
 package PROCES;
 
 import MEMORY.MemoryManager;
+import OS.OSKernel;
 import SYSCALL.Syscall;
 import SYSCALL.SyscallType;
 
-import java.util.List;
+import java.util.ArrayList;
 
 public class CPU {
 
     private PCB current;
     private long cycleCount;
+    private OSKernel kernel;
 
-    public CPU(){
+    public CPU(OSKernel kernel){
         this.current = null;
         this.cycleCount = 0;
+        this.kernel = kernel;
     }
 
     public boolean executeOneStep(MemoryManager mm) {
@@ -45,6 +48,8 @@ public class CPU {
         else if (opcode == 9) { // SYSCALL
             current.setState(ProcessState.WAITING);
             current.setProgramCounter(pc + 1);
+            Syscall syscall = new Syscall(SyscallType.READ, new ArrayList<>());
+            kernel.handleSyscall(syscall, current);
 
             System.out.println("[CPU] Syscall detektovan za PID: " + current.getPid());
             return true;
@@ -54,6 +59,16 @@ public class CPU {
             current.setState(ProcessState.TERMINATED);
             current.setProgramCounter(pc + 1);
             return true;
+        }
+        else if (opcode == 7) { // IDLE
+            int remaining = mm.read(current, pc + 1);
+            System.out.println("[CPU] IDLE PID:" + current.getPid() + " preostalo taktova: " + remaining);
+
+            if (remaining <= 0) {
+                current.setProgramCounter(pc + 2);
+            } else {
+                mm.write(current, pc + 1, remaining - 1);
+            }
         }
         else {
             System.out.println("Nepoznat opcode: " + opcode);
@@ -70,6 +85,9 @@ public class CPU {
 
     public PCB getCurrent(){
         return current;
+    }
+    public long getCycleCount() {
+        return cycleCount;
     }
 
     public void setCurrent(PCB current) {

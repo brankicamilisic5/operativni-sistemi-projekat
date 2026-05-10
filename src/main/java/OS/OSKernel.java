@@ -1,6 +1,7 @@
 package OS;
 import DEVICE.ConsoleDevice;
 import DEVICE.DiskDevice;
+import DEVICE.IODevice;
 import FS.Assembler;
 import FS.FSNode;
 import FS.File;
@@ -36,7 +37,7 @@ public class OSKernel {
         this.processTable =Collections.synchronizedList(new ArrayList<>());
         this.readyQueue = new ReadyQueue(new LinkedList<>());
         this.blockedQueue = new BlockedQueue(Collections.synchronizedList(new ArrayList<PCB>()));
-        this.cpu = new CPU();
+        this.cpu = new CPU(this);
         this.nextPid = 1;
         this.scheduler = new XScheduler(5);
         this.memoryManager = memoryManager;
@@ -150,7 +151,7 @@ public class OSKernel {
         List<Integer> machineCode = assembler.translate(programFile);
 
 
-        PCB newPcb = new PCB(nextPid++, 1);
+        PCB newPcb = new PCB(nextPid++, priority);
 
         boolean allocated = memoryManager.allocate(newPcb, machineCode.size());
         if (!allocated) {
@@ -215,7 +216,7 @@ public class OSKernel {
             if (next.getState() == ProcessState.TERMINATED) {
                 memoryManager.free(next);
                 //processTable.remove(next);
-                System.out.println("--- Proces " + next.getPid() + " ZAVRŠEN.");
+                System.out.println("--- Proces " + next.getPid() + " ZAVRŠEN. Ukupno taktova CPU-a: " + cpu.getCycleCount());
             } else if (next.getState() == ProcessState.WAITING) {
                 blockedQueue.block(next);
                 System.out.println("--- Proces " + next.getPid() + " BLOKIRAN (I/O).");
@@ -427,6 +428,10 @@ public class OSKernel {
             readyQueue.add(p);
             System.out.println("Proces " + p.getPid() + " se probudio iz sleep-a");
         }
+    }
+
+    public void handleIOCompletion(IODevice device) {
+        System.out.println("[KERNEL] IO završen na uređaju: " + device.getName());
     }
 
     public MemoryManager getMemoryManager() {
