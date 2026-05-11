@@ -36,22 +36,42 @@ public class DiskDevice extends IODevice {
         }
 
 
-        if (movingUp) {
-            Collections.sort(requests);
-        } else {
-            requests.sort(Collections.reverseOrder());
+        List<Integer> ispredGlave = new ArrayList<>();
+        List<Integer> izaGlave = new ArrayList<>();
+
+        for (int r : requests) {
+            if (movingUp) {
+                if (r > currentHeadPosition) ispredGlave.add(r);
+                else izaGlave.add(r);
+            } else {
+                if (r < currentHeadPosition) ispredGlave.add(r);
+                else izaGlave.add(r);
+            }
         }
 
+        if (movingUp) {
+            Collections.sort(ispredGlave);
+            Collections.sort(izaGlave, Collections.reverseOrder());
+        } else {
+            Collections.sort(ispredGlave, Collections.reverseOrder());
+            Collections.sort(izaGlave);
+        }
+
+        requests.clear();
+        requests.addAll(ispredGlave);
+        requests.addAll(izaGlave);
+
         System.out.println("\n[SCAN DISK] Glava kreće sa: " + currentHeadPosition +
-                " | Smjer: " + (movingUp ? " GORE" : " DOLE"));
+                " | Smjer: " + (movingUp ? " GORE " : " DOLE "));
+        System.out.println("[SCAN DISK] Zahtjevi " + (movingUp ? "gore" : "dolje") + ": " + ispredGlave);
+        System.out.println("[SCAN DISK] Zahtjevi " + (movingUp ? "dolje" : "gore") + ": " + izaGlave);
         System.out.println("[SCAN DISK] Redoslijed opsluživanja: " + requests);
+
 
         int totalSeek = 0;
         for (int block : requests) {
             int distance = Math.abs(block - currentHeadPosition);
             totalSeek += distance;
-
-
 
             System.out.println("  -> Blok " + block + " (pomak: " + distance + ")");
             currentHeadPosition = block;

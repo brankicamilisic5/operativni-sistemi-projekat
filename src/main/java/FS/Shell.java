@@ -42,7 +42,9 @@ public class Shell {
             switch (command) {
                 case "cd":
                     if (parts.length > 1) {
-                        FSNode node = fs.resolve(parts[1]);
+                        String path = parts[1].startsWith("/") ? parts[1] :
+                                getFullPath(currentDirectory) + "/" + parts[1];
+                        FSNode node = fs.resolve(path);
                         if (node instanceof Directory) currentDirectory = (Directory) node;
                         else System.out.println("Direktorijum nije pronađen.");
                     }
