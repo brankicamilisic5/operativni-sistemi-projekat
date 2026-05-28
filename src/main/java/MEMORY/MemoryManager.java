@@ -1,6 +1,7 @@
 package MEMORY;
 
 import PROCES.PCB;
+import PROCES.ProcessState;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -120,7 +121,8 @@ public class MemoryManager {
                     System.out.println("Write: PID=" + p.getPid() + ", logAddr=" + logicalAddress + ", phyAddr=" + phy + ", value=" + value);
                     return;
                 }
-        throw new RuntimeException("Segmentation Fault: logička adresa " + logicalAddress);
+        System.out.println("[SEGFAULT] PID=" + p.getPid() + " pokušaj pristupa logAddr=" + logicalAddress + " van segmenta! Gasim proces.");
+        p.setState(ProcessState.TERMINATED);
     }
 
     public String dumpMemory() {

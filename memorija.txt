@@ -1,9 +1,37 @@
 DIR /Sistem
 DIR /User
-DIR /User/dokumenti
-FILE /Sistem/kernel.sys HALT
-FILE /Sistem/idle.asm IDLE 10\nHALT
-FILE /Sistem/network.asm IDLE 20\nHALT
-FILE /User/hello.asm LOAD 5\nADD 3\nHALT
+DIR /Data
+DIR /Aplikacije
+
+FILE /Sistem/idle.asm IDLE 1\nJMP 0
+FILE /Sistem/monitor.asm LOAD 100\nADD 50\nMUL 2\nSUB 30\nDIV 2\nPRINT\nJMP 0
+FILE /Sistem/logger.asm IDLE 2\nIDLE 2\nIDLE 2\nPRINT\nJMP 0
+
+FILE /User/calc1.asm LOAD 10\nADD 20\nMUL 3\nSUB 15\nDIV 2\nSTORE 100\nLOAD 100\nADD 50\nPRINT\nHALT
+FILE /User/calc2.asm LOAD 5\nMUL 10\nADD 25\nSUB 5\nSTORE 110\nLOAD 110\nMUL 2\nPRINT\nHALT
+FILE /User/calc3.asm LOAD 100\nDIV 5\nADD 20\nMUL 2\nSUB 10\nPRINT\nHALT
+
+FILE /User/beskonacni1.asm LOAD 7\nADD 3\nMUL 2\nSUB 4\nDIV 2\nPRINT\nJMP 0
+FILE /User/beskonacni2.asm LOAD 15\nSUB 5\nMUL 3\nADD 10\nSTORE 120\nLOAD 120\nPRINT\nJMP 0
+FILE /User/beskonacni3.asm LOAD 50\nADD 25\nDIV 5\nMUL 4\nSUB 20\nPRINT\nJMP 0
+
+FILE /User/uslovni1.asm LOAD 0\nJZ 8\nLOAD 999\nJMP 12\nADD 100\nSTORE 50\nPRINT\nHALT
+FILE /User/uslovni2.asm LOAD 10\nSUB 10\nJZ 10\nMUL 50\nJMP 12\nLOAD 777\nPRINT\nHALT
+FILE /User/uslovni3.asm LOAD 42\nSUB 21\nJZ 10\nDIV 7\nJMP 12\nLOAD 333\nPRINT\nHALT
+
+FILE /Data/processor1.asm LOAD 12\nADD 8\nMUL 5\nSUB 20\nDIV 2\nSTORE 130\nLOAD 130\nPRINT\nHALT
+FILE /Data/processor2.asm LOAD 25\nMUL 2\nADD 50\nSUB 30\nSTORE 140\nLOAD 140\nDIV 5\nPRINT\nHALT
+FILE /Data/processor3.asm LOAD 100\nADD 50\nSUB 25\nMUL 2\nDIV 10\nPRINT\nHALT
+
+FILE /Aplikacije/app1.asm LOAD 5\nADD 5\nADD 5\nADD 5\nMUL 2\nPRINT\nHALT
+FILE /Aplikacije/app2.asm LOAD 20\nDIV 4\nADD 10\nMUL 3\nSUB 15\nPRINT\nHALT
+FILE /Aplikacije/app3.asm LOAD 33\nSUB 11\nMUL 3\nADD 25\nDIV 5\nPRINT\nHALT
+FILE /Aplikacije/beskonacni_app.asm LOAD 99\nSUB 1\nMUL 1\nADD 1\nDIV 1\nPRINT\nJMP 0
+
 PROCESS /Sistem/idle.asm
-PROCESS /Sistem/network.asm
+PROCESS /Sistem/monitor.asm
+PROCESS /Sistem/logger.asm
+PROCESS /User/beskonacni1.asm
+PROCESS /User/beskonacni2.asm
+PROCESS /User/beskonacni3.asm
+PROCESS /Aplikacije/beskonacni_app.asm

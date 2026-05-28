@@ -12,11 +12,6 @@ public class BlockedQueue {
         this.list = list;
     }
 
-    public BlockedQueue() {
-        this.list = new ArrayList<>();
-    }
-
-
     public void block(PCB p) {
         p.setState(ProcessState.WAITING);
         list.add(p);

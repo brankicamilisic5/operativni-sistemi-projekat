@@ -57,12 +57,25 @@ public class Shell {
                     break;
 
                 case "ps":
+                    System.out.println("\n=== AKTIVNI PROCESI ===");
                     System.out.println("PID\tPC\tStatus\t\tAdresa\tLimit\tInstrukcija\tTip");
                     synchronized(kernel.getProcessTable()) {
-                        kernel.getProcessTable().forEach(p ->
-                                System.out.println(p.getPid() + "\t" + p.getProgramCounter() + "\t" +
-                                        p.getState() + "\t\t" + p.getBaseAddress() + "\t" +
-                                        p.getLimit() + "\t\t" + p.getExecutedInstructions()+"\t\t"+p.getType()));
+                        kernel.getProcessTable().stream()
+                                .filter(p -> p.getState() != ProcessState.TERMINATED)
+                                .forEach(p -> System.out.println(
+                                        p.getPid() + "\t" + p.getProgramCounter() + "\t" +
+                                                p.getState() + "\t\t" + p.getBaseAddress() + "\t" +
+                                                p.getLimit() + "\t\t" + p.getExecutedInstructions() + "\t\t" + p.getType()));
+                    }
+                    System.out.println("\n=== ZAVRŠENI PROCESI ===");
+                    System.out.println("PID\tPC\tAdresa\tLimit\tInstrukcija\tTip");
+                    synchronized(kernel.getProcessTable()) {
+                        kernel.getProcessTable().stream()
+                                .filter(p -> p.getState() == ProcessState.TERMINATED)
+                                .forEach(p -> System.out.println(
+                                        p.getPid() + "\t" + p.getProgramCounter() + "\t" +
+                                                p.getBaseAddress() + "\t" + p.getLimit() + "\t\t" +
+                                                p.getExecutedInstructions() + "\t\t" + p.getType()));
                     }
                     break;
                 case "mkdir":

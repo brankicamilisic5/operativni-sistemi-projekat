@@ -4,6 +4,9 @@ package FS;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Assembler {
 
     public List<Integer> translate(File file){
@@ -50,6 +53,36 @@ public class Assembler {
                     code.add(operand);
                     break;
 
+                case "SUB":
+                    code.add(6);
+                    code.add(operand);
+                    break;
+
+                case "MUL":
+                    code.add(10);
+                    code.add(operand);
+                    break;
+
+                case "DIV":
+                    code.add(11);
+                    code.add(operand);
+                    break;
+
+                case "JMP":
+                    code.add(4);
+                    code.add(operand);
+                    break;
+
+                case "JZ":
+                    code.add(5);
+                    code.add(operand); // Broj linije na koju skače ACC == 0
+                    break;
+
+                case "PRINT":
+                    code.add(12);
+                    code.add(0);
+                    break;
+
                 case "IDLE":
                     code.add(7);
                     code.add(operand);
@@ -57,9 +90,11 @@ public class Assembler {
 
                 case "SYSCALL":
                     code.add(9);
+                    code.add(0);
                     break;
 
                 case "HALT":
+                    code.add(0);
                     code.add(0);
                     break;
 
