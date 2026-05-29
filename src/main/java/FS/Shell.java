@@ -86,10 +86,11 @@ public class Shell {
 
                 case "run":
                     if (parts.length > 1) {
-                        int pid = kernel.createProcess(parts[1], 1);
-                        if (pid != -1) {
-                            System.out.println("Proces " + pid + " pokrenut.");
-                        }
+                        String path = parts[1].startsWith("/") ?
+                                parts[1] :
+                                getFullPath(currentDirectory) + "/" + parts[1];
+                        int pid = kernel.createProcess(path, 1);
+                        if (pid != -1) System.out.println("Proces " + pid + " pokrenut.");
                     }
                     break;
 
