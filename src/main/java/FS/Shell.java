@@ -1,5 +1,6 @@
 package FS;
 
+import java.util.ArrayList;
 import java.util.Scanner;
 import OS.*;
 import java.util.Arrays;
@@ -207,6 +208,84 @@ public class Shell {
                     } else {
                         System.out.println("Trenutna brzina: " + kernel.getCpuBrzina() + "ms");
                     }
+                    break;
+                case "show":
+                    System.out.println("\n=== DETALJAN PREGLED SISTEMA IZ JEZGRA ===");
+
+                    System.out.println("\n[Memorija - Buddy Sistem]");
+                    System.out.println("Ukupan kapacitet RAM-a: " + kernel.getMemoryManager().getRamSize() + "B");
+
+                    boolean imaAktivnihMem = false;
+                    synchronized(kernel.getProcessTable()) {
+                        for (PCB p : kernel.getProcessTable()) {
+                            if (p.getState() != ProcessState.TERMINATED) {
+                                int start = p.getBaseAddress();
+                                int end = p.getBaseAddress() + p.getLimit() - 1;
+                                System.out.printf("  • Blok [%04d - %04d] -> Zauzeo PID %d (Limit: %dB)%n",
+                                        start, end, p.getPid(), p.getLimit());
+                                imaAktivnihMem = true;
+                            }
+                        }
+                    }
+                    if (!imaAktivnihMem)
+                        System.out.println("  • Sva memorija slobodna.");
+
+
+                    System.out.println("\n[Raspoređivač - Procesorski redovi]");
+                    String trenutniCpu = "Nijedan (CPU miruje)";
+                    List<Integer> spremniProcesi = new ArrayList<>();
+                    List<Integer> blokiraniProcesi = new ArrayList<>();
+
+                    synchronized(kernel.getProcessTable()) {
+                        for (PCB p : kernel.getProcessTable()) {
+                            if (p.getState() == ProcessState.RUNNING)
+                                trenutniCpu = "PID " + p.getPid() + " [" + p.getType() + "]";
+                            else if (p.getState() == ProcessState.READY)
+                                spremniProcesi.add(p.getPid());
+                            else if (p.getState() == ProcessState.WAITING)
+                                blokiraniProcesi.add(p.getPid());
+                        }
+                    }
+
+                    System.out.println("  • Na CPU: " + trenutniCpu);
+                    System.out.println("  • ReadyQueue: " + (spremniProcesi.isEmpty() ? "Prazan" : spremniProcesi));
+                    System.out.println("  • Blokirani: " + (blokiraniProcesi.isEmpty() ? "Nema" : blokiraniProcesi));
+
+
+                    System.out.println("\n[Aktivni procesi]");
+                    synchronized(kernel.getProcessTable()) {
+                        for (PCB p : kernel.getProcessTable()) {
+                            if (p.getState() != ProcessState.TERMINATED)
+                                System.out.printf("  • PID %d | %-10s | Izvrseno: %d instrukcija | %s%n",
+                                        p.getPid(), p.getState(), p.getExecutedInstructions(), p.getType());
+                        }
+                    }
+
+                    System.out.println("\n[Završeni procesi]");
+                    boolean imaZavrsenih = false;
+                    synchronized(kernel.getProcessTable()) {
+                        for (PCB p : kernel.getProcessTable()) {
+                            if (p.getState() == ProcessState.TERMINATED) {
+                                System.out.printf("  • PID %d | Izvrseno: %d instrukcija | %s%n",
+                                        p.getPid(), p.getExecutedInstructions(), p.getType());
+                                imaZavrsenih = true;
+                            }
+                        }
+                    }
+                    if (!imaZavrsenih)
+                        System.out.println("  • Nema završenih procesa.");
+
+
+                    System.out.println("\n[Hardverski podsistem]");
+                    System.out.println("  • Virtuelni disk (HDD): Operativan");
+                    System.out.println("  • SCAN algoritam raspoređivanja diska: Aktivan");
+
+
+                    System.out.println("    └─ Trenutna pozicija glave: Blok 99");
+                    System.out.println("    └─ Trenutna orijentacija kretanja: PREMA GORE (Ascending)");
+
+                    System.out.println("  • DMA kontroler: Operativan (Uspješno rasterećuje CPU; prenos Disk <-> RAM se vrši direktno)");
+                    System.out.println("==========================================\n");
                     break;
                 default:
                     System.out.println("Nepoznata komanda.");

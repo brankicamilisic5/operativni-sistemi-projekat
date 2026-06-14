@@ -223,7 +223,7 @@ public class OSKernel {
             } else {
                 next.setState(ProcessState.READY);
                 readyQueue.add(next);
-                System.out.println("--- PID " + next.getPid() + " vraćen u ReadyQueue.");
+                //System.out.println("--- PID " + next.getPid() + " vraćen u ReadyQueue.");
             }
         }
     }
@@ -383,17 +383,6 @@ public class OSKernel {
         processTable.add(novi);
 
         System.out.println("Kreiran proces " + novi.getPid());
-    }
-
-    private PCB findProcess(int pid) {
-        for (PCB p : processTable) {
-            if (p.getPid() == pid) return p;
-        }
-        return null;
-    }
-
-    private int generatePid() {
-        return nextPid++;
     }
 
     public void dispatch() {

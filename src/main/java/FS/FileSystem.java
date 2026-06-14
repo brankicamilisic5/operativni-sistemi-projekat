@@ -128,7 +128,7 @@ public class FileSystem {
             if (!bitVector[i]) {
                 bitVector[i] = true;
                 file.setDiskBlock(i);
-                System.out.println("[BitVector] Zauzet fizički blok: " + i);
+                //System.out.println("[BitVector] Zauzet fizički blok: " + i);
                 break;
             }
         }

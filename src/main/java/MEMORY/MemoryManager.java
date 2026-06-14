@@ -40,7 +40,7 @@ public class MemoryManager {
         segments.add(right);
         segments.sort((a, b) -> Integer.compare(a.getBase(), b.getBase()));
 
-        System.out.println("Split: " + s.getLimit() + " -> " + left.getLimit() + " + " + right.getLimit());
+        //System.out.println("Split: " + s.getLimit() + " -> " + left.getLimit() + " + " + right.getLimit());
         return left;
     }
 
@@ -54,7 +54,7 @@ public class MemoryManager {
                 s.setOwner(p);
                 p.setBaseAddress(s.getBase());
                 p.setLimit(s.getLimit());
-                System.out.println("Allocated: PID=" + p.getPid() + ", Base=" + s.getBase() + ", Limit=" + s.getLimit());
+                //System.out.println("Allocated: PID=" + p.getPid() + ", Base=" + s.getBase() + ", Limit=" + s.getLimit());
                 return true;
             } else {
                 s = split(s);
@@ -77,7 +77,7 @@ public class MemoryManager {
     private void merge(int index) {
         MemorySegment s = segments.get(index);
         MemorySegment buddy = findBuddy(s);
-        if (buddy != null && buddy.isFree()) {
+        if (buddy != null && buddy.isFree() && buddy.getLimit() == s.getLimit()) {
             int newBase = Math.min(s.getBase(), buddy.getBase());
             int newLimit = s.getLimit() * 2;
 
@@ -106,7 +106,7 @@ public class MemoryManager {
             if (s.getOwner() != null && s.getOwner().equals(p))
                 if (logicalAddress >= 0 && logicalAddress < s.getLimit()) {
                     int phy = s.getBase() + logicalAddress;
-                    System.out.println("Read: PID=" + p.getPid() + ", logAddr=" + logicalAddress + ", phyAddr=" + phy);
+                    //System.out.println("Read: PID=" + p.getPid() + ", logAddr=" + logicalAddress + ", phyAddr=" + phy);
                     return ram.read(phy);
                 }
         throw new RuntimeException("Segmentation Fault: logička adresa " + logicalAddress);
@@ -118,7 +118,7 @@ public class MemoryManager {
                 if (logicalAddress >= 0 && logicalAddress < s.getLimit()) {
                     int phy = s.getBase() + logicalAddress;
                     ram.write(phy, value);
-                    System.out.println("Write: PID=" + p.getPid() + ", logAddr=" + logicalAddress + ", phyAddr=" + phy + ", value=" + value);
+                    //System.out.println("Write: PID=" + p.getPid() + ", logAddr=" + logicalAddress + ", phyAddr=" + phy + ", value=" + value);
                     return;
                 }
         System.out.println("[SEGFAULT] PID=" + p.getPid() + " pokušaj pristupa logAddr=" + logicalAddress + " van segmenta! Gasim proces.");
@@ -129,5 +129,9 @@ public class MemoryManager {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < ram.size(); i++) sb.append(ram.read(i)).append(" ");
         return sb.toString().trim();
+    }
+
+    public int getRamSize() {
+        return ram.size();
     }
 }
