@@ -1,3 +1,4 @@
 out/
 *.class
 .idea/
+javafx-sdk-20/

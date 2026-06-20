@@ -18,7 +18,7 @@ import SYSCALL.SyscallType;
 import java.util.*;
 
 
-public class OSKernel {
+public class OSKernel implements Runnable {
     private List<PCB> processTable;
     private ReadyQueue readyQueue;
     private BlockedQueue blockedQueue;
@@ -197,7 +197,8 @@ public class OSKernel {
             int quantum = ((XScheduler)scheduler).getTimeQuantum();
             int brzina = cpuBrzina;
 
-            System.out.println("\n>>> CPU preuzima PID: " + next.getPid());
+            System.out.println(">>> CPU preuzima PID: " + next.getPid());
+
             cpu.contextSwitch(next);
             next.setState(ProcessState.RUNNING);
 

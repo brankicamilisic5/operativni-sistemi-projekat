@@ -14,11 +14,14 @@ public class Shell {
     private Directory currentDirectory;
     private boolean running = true;
     private OpenFileHandle activeHandle = null;
+    private Thread kernelThread;
+
 
     public Shell(OSKernel kernel, FileSystem fs) {
         this.kernel = kernel;
         this.fs = fs;
         this.currentDirectory = (Directory) fs.resolve("/");
+        this.kernelThread = new Thread(kernel);
     }
 
 
@@ -29,6 +32,8 @@ public class Shell {
     }
 
     public void start() {
+        kernelThread.start();
+        try { Thread.sleep(300); } catch (InterruptedException e) {}
         Scanner scanner = new Scanner(System.in);
         System.out.println("--- Dobrodošli---");
 
