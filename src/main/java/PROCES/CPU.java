@@ -70,18 +70,17 @@ public class CPU {
             current.setProgramCounter(pc + 2);
         }
         else if (opcode == 4) { // JMP - bezuslovan skok
-            int targetAddr = mm.read(current, pc + 1);
-            current.setProgramCounter(targetAddr); // Direktno na adresu
+            int target = mm.read(current, pc + 1);
+            current.setProgramCounter(target * 2);
         }
         else if (opcode == 5) { // JZ - skok ako je ACC == 0
             int targetAddr = mm.read(current, pc + 1);
             int acc = current.getRegisters().getOrDefault("ACC", 0);
 
-            if (acc == 0) {
-                current.setProgramCounter(targetAddr);
-            } else {
+            if (acc == 0)
+                current.setProgramCounter(targetAddr * 2);
+            else
                 current.setProgramCounter(pc + 2);
-            }
         }
         else if (opcode == 12) { // PRINT
             int acc = current.getRegisters().getOrDefault("ACC", 0);
