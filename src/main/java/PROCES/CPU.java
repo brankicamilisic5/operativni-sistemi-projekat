@@ -21,7 +21,8 @@ public class CPU {
     }
 
     public boolean executeOneStep(MemoryManager mm) {
-        if (current == null || current.getState() == ProcessState.TERMINATED) return true;
+        if (current == null || current.getState() == ProcessState.TERMINATED
+                || current.getState() == ProcessState.WAITING) return true;
 
         int pc = current.getProgramCounter();
         int opcode = mm.read(current, pc);

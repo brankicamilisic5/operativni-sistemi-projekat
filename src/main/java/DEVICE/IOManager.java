@@ -1,6 +1,7 @@
 package DEVICE;
 
 import IO.IOOperation;
+import IO.IOType;
 import PROCES.PCB;
 import PROCES.ProcessState;
 import OS.OSKernel;
@@ -59,10 +60,19 @@ public class IOManager {
         synchronized (device) {
             device.setBusy(false);
         }
+        System.out.println("[IO COMPLETE] Oslobađam PID: " + p.getPid());
         kernel.getBlockedQueue().unblock(p);
         p.setState(ProcessState.READY);
         kernel.getReadyQueue().add(p);
         kernel.handleIOCompletion(device);
+
+        for (PCB blocked : kernel.getBlockedQueue().getList()) {
+            if (blocked.getState() == ProcessState.WAITING) {
+                IOOperation novaOp = new IOOperation(IOType.READ, "", 2000);
+                requestIO(blocked, device.getName(), novaOp);
+                break;
+            }
+        }
     }
 
 

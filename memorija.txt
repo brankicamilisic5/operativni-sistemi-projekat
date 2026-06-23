@@ -25,7 +25,10 @@ FILE /Data/processor3.asm LOAD 100\nADD 50\nDIV 10\nPRINT\nHALT
 FILE /Aplikacije/app1.asm LOAD 5\nADD 5\nMUL 2\nPRINT\nHALT
 FILE /Aplikacije/app2.asm LOAD 20\nDIV 4\nADD 10\nPRINT\nHALT
 FILE /Aplikacije/app3.asm LOAD 33\nSUB 11\nMUL 3\nPRINT\nHALT
-FILE /Aplikacije/beskonacni_app.asm LOAD 99\nADD 1\nPRINT\nJMP 0
+
+FILE /User/syscall_test.asm LOAD 5\nADD 3\nSYSCALL\nPRINT\nHALT
+FILE /User/syscall2.asm LOAD 10\nSYSCALL\nADD 5\nSYSCALL\nPRINT\nSYSCALL\nHALT
+FILE /User/syscall3.asm LOAD 1\nSYSCALL\nPRINT\nHALT
 
 PROCESS /Sistem/idle.asm
 PROCESS /Sistem/monitor.asm
@@ -33,4 +36,8 @@ PROCESS /Sistem/logger.asm
 PROCESS /User/beskonacni1.asm
 PROCESS /User/beskonacni2.asm
 PROCESS /User/beskonacni3.asm
-PROCESS /Aplikacije/beskonacni_app.asm
+PROCESS /User/syscall_test.asm
+PROCESS /User/syscall2.asm
+PROCESS /User/syscall3.asm
+
+

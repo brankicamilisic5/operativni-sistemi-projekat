@@ -28,8 +28,6 @@ public class MainScreenGUI extends Application {
         this.currentDirectory = (Directory) fs.resolve("/");
     }
 
-    public MainScreenGUI() {}
-
     @Override
     public void start(Stage primaryStage) {
         BorderPane root = new BorderPane();

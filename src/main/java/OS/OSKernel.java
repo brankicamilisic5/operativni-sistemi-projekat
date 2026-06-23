@@ -44,7 +44,7 @@ public class OSKernel implements Runnable {
         this.fileSystem = fileSystem;
         this.sleepQueue = Collections.synchronizedList(new ArrayList<>());
         this.ioManager = new IOManager(this);
-        this.ioManager.addDevice(new ConsoleDevice("console"));
+        this.ioManager.addDevice(new ConsoleDevice("console",this.blockedQueue));
         this.ioManager.addDevice(new DiskDevice("disk", this.blockedQueue));
         dma = new DMAController(this);
     }
@@ -221,6 +221,7 @@ public class OSKernel implements Runnable {
             } else if (next.getState() == ProcessState.WAITING) {
                 blockedQueue.block(next);
                 System.out.println("--- Proces " + next.getPid() + " BLOKIRAN (I/O).");
+                printBlockedQueue();
             } else {
                 next.setState(ProcessState.READY);
                 readyQueue.add(next);
@@ -252,9 +253,6 @@ public class OSKernel implements Runnable {
 
                     p.setState(ProcessState.WAITING);
                     blockedQueue.block(p);
-                    cpu.setCurrent(null);
-
-                    long duration = 0;
 
                     ioManager.requestIO(p, "console", op);
 
@@ -275,6 +273,7 @@ public class OSKernel implements Runnable {
                     }
 
                     try {
+                        long duration = 0;
                         duration = Long.parseLong(request.getArgs().get(0));
                         p.setState(ProcessState.WAITING);
                         cpu.setCurrent(null);
@@ -329,6 +328,7 @@ public class OSKernel implements Runnable {
 
 
             target.setState(ProcessState.TERMINATED);
+            memoryManager.free(target);
 
             readyQueue.remove(target);
             blockedQueue.unblock(target);
@@ -372,20 +372,6 @@ public class OSKernel implements Runnable {
         dispatch();
     }
 
-
-
-    public void createProcess(List<String> args) {
-
-        PCB novi = new PCB(nextPid++, 1);
-
-        novi.setState(ProcessState.READY);
-
-        readyQueue.add(novi);
-        processTable.add(novi);
-
-        System.out.println("Kreiran proces " + novi.getPid());
-    }
-
     public void dispatch() {
 
         PCB next = scheduler.chooseNext(readyQueue);
@@ -426,5 +412,12 @@ public class OSKernel implements Runnable {
 
     public MemoryManager getMemoryManager() {
         return memoryManager;
+    }
+
+    public void printBlockedQueue() {
+        System.out.println("[BLOCKED QUEUE]: ");
+        for (PCB p : blockedQueue.getList()) {
+            System.out.println("  PID " + p.getPid() + " | " + p.getType() + " | WAITING");
+        }
     }
 }

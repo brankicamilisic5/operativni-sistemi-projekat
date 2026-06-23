@@ -5,7 +5,7 @@ import java.util.Queue;
 
 public class ReadyQueue {
 
-    private Queue<PCB> queue = new LinkedList<>();
+    private Queue<PCB> queue;
 
     public ReadyQueue(Queue<PCB> queue) {
         this.queue = queue;
@@ -25,9 +25,5 @@ public class ReadyQueue {
 
     public void remove(PCB pcb) {
         queue.remove(pcb);
-    }
-
-    public PCB getNextProcess(){
-        return queue.poll();
     }
 }

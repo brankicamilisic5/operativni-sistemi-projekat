@@ -113,15 +113,15 @@ public class Shell {
                     if (parts.length > 1) {
                         FSNode node = fs.resolve(parts[1]);
                         if (node instanceof File f) {
-                            System.out.println("=== " + f.getName() + " ===");
-                            String sadrzaj = f.read();
-                            System.out.println(sadrzaj.isEmpty() ? "(prazan fajl)" : sadrzaj);
+                            OpenFileHandle readHandle = new OpenFileHandle(f, 0, FileMode.READ);
+                            System.out.println("=== " + f.getName() + " === [FileMode: READ]");
+                            String sadrzaj = readHandle.read();
+                            System.out.println(sadrzaj == null || sadrzaj.isEmpty() ? "(prazan fajl)" : sadrzaj);
                         } else {
                             System.out.println("Fajl ne postoji: " + parts[1]);
                         }
                     }
                     break;
-
 
                 case "touch":
                     if (parts.length > 1) {
@@ -161,7 +161,7 @@ public class Shell {
                         break;
                     }
                     String asmCode = input.substring(input.indexOf(' ') + 1).replace("\\n", "\n");
-                    activeHandle.getFile().write(asmCode);
+                    activeHandle.write(asmCode);
 
                     Assembler asm = new Assembler();
                     List<Integer> binary = asm.translate(activeHandle.getFile());
@@ -280,16 +280,10 @@ public class Shell {
                     if (!imaZavrsenih)
                         System.out.println("  • Nema završenih procesa.");
 
-
-                    System.out.println("\n[Hardverski podsistem]");
-                    System.out.println("  • Virtuelni disk (HDD): Operativan");
-                    System.out.println("  • SCAN algoritam raspoređivanja diska: Aktivan");
-
-
-                    System.out.println("    └─ Trenutna pozicija glave: Blok 99");
-                    System.out.println("    └─ Trenutna orijentacija kretanja: PREMA GORE (Ascending)");
-
+                    System.out.println("\n");
                     System.out.println("  • DMA kontroler: Operativan (Uspješno rasterećuje CPU; prenos Disk <-> RAM se vrši direktno)");
+                    System.out.println("  • DMA statistika: " + kernel.getDma().getTransferCount() +
+                            " prenosa, ukupno " + kernel.getDma().getTotalBytesTransferred() + " bajtova");
                     System.out.println("==========================================\n");
                     break;
                 default:

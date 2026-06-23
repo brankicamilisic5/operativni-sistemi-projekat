@@ -55,10 +55,7 @@ public class DMAController {
 
         }).start();
     }
-
-    public boolean isBusy() {
-        return busy;
-    }
+    
 
     public int getTransferCount() {
         return transferCount;

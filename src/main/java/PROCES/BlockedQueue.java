@@ -6,17 +6,18 @@ import java.util.List;
 
 public class BlockedQueue {
 
-    private List<PCB> list = new ArrayList<>();
+    private List<PCB> list;
 
     public BlockedQueue(List<PCB> list) {
         this.list = list;
     }
 
     public void block(PCB p) {
-        p.setState(ProcessState.WAITING);
-        list.add(p);
+        if (!list.contains(p)) {
+            p.setState(ProcessState.WAITING);
+            list.add(p);
+        }
     }
-
 
     public void unblock(PCB p) {
         if (list.remove(p)) {
@@ -24,21 +25,12 @@ public class BlockedQueue {
         }
     }
 
+    public List<PCB> getList() {
+        return list;
+    }
+
     public void remove(PCB p) {
         list.remove(p);
     }
-
-
-    public List<PCB> findByDevice(IODevice sd) {
-        List<PCB> result = new ArrayList<>();
-        for (PCB p : list) {
-
-            if (p.getState() == ProcessState.WAITING) {
-                result.add(p);
-            }
-        }
-        return result;
-    }
-
 
 }

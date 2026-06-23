@@ -1,13 +1,14 @@
 package DEVICE;
 import IO.IOOperation;
 import IO.IOType;
+import PROCES.BlockedQueue;
 import PROCES.PCB;
 
 
 public class ConsoleDevice extends IODevice {
 
-    public ConsoleDevice(String name) {
-        super(name,null);
+    public ConsoleDevice(String name, BlockedQueue queue) {
+        super(name,queue);
     }
 
     @Override

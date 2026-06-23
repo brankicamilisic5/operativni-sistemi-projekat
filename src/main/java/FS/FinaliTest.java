@@ -53,6 +53,9 @@ public class FinaliTest {
         FS.File f7 = fs.createFile("/Aplikacije/app1.asm");
         if (f7 != null) f7.write("LOAD 5\nADD 5\nMUL 2\nPRINT\nHALT");
 
+        FS.File f8 = fs.createFile("/User/syscall_test.asm");
+        if (f8 != null) f8.write("LOAD 5\nADD 3\nSYSCALL\nPRINT\nHALT");
+
         kernel.createProcess("/Data/processor1.asm", 1);
         kernel.createProcess("/Data/processor2.asm", 1);
         kernel.createProcess("/Data/processor3.asm", 1);

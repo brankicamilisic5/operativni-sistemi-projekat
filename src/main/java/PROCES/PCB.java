@@ -31,13 +31,9 @@ public class PCB {
     public void setType(String type) { this.type = type; }
 
     public int getPid() {return pid;}
-    public void setPid(int pid) {this.pid = pid;}
 
     public ProcessState getState() {return state;}
     public void setState(ProcessState state) {this.state = state;}
-
-    public int getPriority() {return priority;}
-    public void setPriority(int priority) {this.priority = priority;}
 
     public int getProgramCounter() {return programCounter;}
     public void setProgramCounter(int programCounter) {this.programCounter = programCounter;}
