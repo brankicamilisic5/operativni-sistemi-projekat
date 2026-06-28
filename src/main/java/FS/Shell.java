@@ -86,7 +86,11 @@ public class Shell {
                     break;
                 case "mkdir":
                     if (parts.length > 1) {
-                        fs.createDirectory(getFullPath(currentDirectory) + "/" + parts[1]);
+                        String path = parts[1].startsWith("/") ?
+                                parts[1] :
+                                getFullPath(currentDirectory) + "/" + parts[1];
+
+                        fs.createDirectory(path);
                     }
                     break;
 
@@ -105,13 +109,23 @@ public class Shell {
                     break;
 
                 case "rm":
-                    if (parts.length > 1) fs.delete(parts[1]);
+                    if (parts.length > 1) {
+                        String path = parts[1].startsWith("/") ?
+                                parts[1] :
+                                getFullPath(currentDirectory) + "/" + parts[1];
+
+                        fs.delete(path);
+                    }
                     break;
 
 
                 case "cat":
                     if (parts.length > 1) {
-                        FSNode node = fs.resolve(parts[1]);
+                        String path = parts[1].startsWith("/") ?
+                                parts[1] :
+                                getFullPath(currentDirectory) + "/" + parts[1];
+
+                        FSNode node = fs.resolve(path);
                         if (node instanceof File f) {
                             OpenFileHandle readHandle = new OpenFileHandle(f, 0, FileMode.READ);
                             System.out.println("=== " + f.getName() + " === [FileMode: READ]");
@@ -125,7 +139,9 @@ public class Shell {
 
                 case "touch":
                     if (parts.length > 1) {
-                        String path = getFullPath(currentDirectory) + "/" + parts[1];
+                        String path= parts[1].startsWith("/") ?
+                                parts[1] :
+                                getFullPath(currentDirectory) + "/" + parts[1];
                         File f = fs.createFile(path);
                         if (f != null) System.out.println("Kreiran fajl: " + parts[1]);
                     }

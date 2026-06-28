@@ -67,9 +67,11 @@ public class FileSystem {
     }
 
     private String getFullPath(FSNode node) {
-        if (node.getParent() == null) return "";
-        return getFullPath(node.getParent()) + "/" + node.getName();
+        if (node.getParent() == null) return "/";
+        String p=getFullPath(node.getParent());
+        return p.equals("/") ? "/" + node.getName() : p + "/" + node.getName();
     }
+
 
     public Directory createDirectory(String path) {
         if (path == null || path.isEmpty() || path.equals("/")) return root;

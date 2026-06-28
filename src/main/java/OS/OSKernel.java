@@ -223,9 +223,12 @@ public class OSKernel implements Runnable {
                 System.out.println("--- Proces " + next.getPid() + " BLOKIRAN (I/O).");
                 printBlockedQueue();
             } else {
-                next.setState(ProcessState.READY);
-                readyQueue.add(next);
-                //System.out.println("--- PID " + next.getPid() + " vraćen u ReadyQueue.");
+                if (processTable.contains(next)) {
+                    next.setState(ProcessState.READY);
+                    readyQueue.add(next);
+                } else {
+                    System.out.println("--- Proces " + next.getPid() + " je uklonjen iz tabele, ne vraćam ga.");
+                }
             }
         }
     }
