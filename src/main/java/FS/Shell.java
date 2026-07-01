@@ -112,8 +112,9 @@ public class Shell {
                     if (parts.length > 1) {
                         String path = parts[1].startsWith("/") ?
                                 parts[1] :
-                                getFullPath(currentDirectory) + "/" + parts[1];
-
+                                getFullPath(currentDirectory).equals("/") ?
+                                        "/" + parts[1] :
+                                        getFullPath(currentDirectory) + "/" + parts[1];
                         fs.delete(path);
                     }
                     break;
@@ -127,6 +128,9 @@ public class Shell {
 
                         FSNode node = fs.resolve(path);
                         if (node instanceof File f) {
+                            System.out.println("[DMA] Iniciran prenos Disk -> RAM za: " + f.getName());
+                            kernel.getDma().transfer("HDD", "RAM", f.read(), null);
+
                             OpenFileHandle readHandle = new OpenFileHandle(f, 0, FileMode.READ);
                             System.out.println("=== " + f.getName() + " === [FileMode: READ]");
                             String sadrzaj = readHandle.read();

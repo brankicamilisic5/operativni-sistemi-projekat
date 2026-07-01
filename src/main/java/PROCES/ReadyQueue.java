@@ -11,8 +11,10 @@ public class ReadyQueue {
         this.queue = queue;
     }
 
-    public void add(PCB p){
-        queue.add(p);
+    public void add(PCB p) {
+        if (!queue.contains(p)) {
+            queue.add(p);
+        }
     }
 
     public PCB removeNext(){
